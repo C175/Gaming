@@ -107,8 +107,23 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .pref strong{color:#f0c040;margin-left:3px}
 .pref.hot-ref strong{color:#ff8800}
 .pref.wide-ref{color:#4488bb}.pref.wide-ref strong{color:#66ccff}
+.pref.bolt-ref{color:#4466aa}.pref.bolt-ref strong{color:#aaddff}
 .bet-num.wide{outline:1px solid rgba(100,200,255,0.25)}
 .bet-num.wide.selected{outline:2px solid rgba(100,200,255,0.7)}
+/* Lightning bolt multiplier */
+@keyframes bolt-strike{
+  0%  {background:rgba(220,235,255,0.97);box-shadow:0 0 32px 10px rgba(140,190,255,1),inset 0 0 20px rgba(200,220,255,0.9)}
+  12% {background:rgba(80,120,255,0.25); box-shadow:0 0 8px rgba(120,170,255,0.4)}
+  22% {background:rgba(220,235,255,0.92);box-shadow:0 0 28px 8px rgba(140,190,255,0.95),inset 0 0 16px rgba(200,220,255,0.7)}
+  42% {background:rgba(60,100,200,0.18); box-shadow:0 0 12px rgba(120,170,255,0.5)}
+  100%{background:rgba(30,60,160,0.12);  box-shadow:0 0 10px rgba(100,160,255,0.35)}}
+.bet-num.bolt-strike{animation:bolt-strike 0.55s ease-out forwards!important;
+  border-color:#88c8ff!important;color:#fff!important}
+.bet-num.bolt-lit{border-color:#5599dd!important;
+  box-shadow:0 0 10px rgba(100,180,255,0.5),inset 0 0 8px rgba(100,180,255,0.12)!important}
+.bet-num.bolt-lit::after{content:attr(data-lmult);position:absolute;top:1px;right:2px;
+  font-size:8px;font-weight:900;font-family:'Orbitron',sans-serif;
+  color:#aaddff;text-shadow:0 0 4px #88bbff;line-height:1;pointer-events:none}
 
 @media(max-width:820px){body{padding:0}#app{width:100%}
   #gameCanvas{width:100%;height:auto}#bet-grid{grid-template-columns:repeat(12,1fr)}}
@@ -145,6 +160,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <span class="pref">5+ balls <strong>100×</strong></span>
     <span class="pref hot-ref" id="hot-ref" style="display:none">🔥 HOT <strong>1.5×</strong></span>
     <span class="pref wide-ref">◀▶ WIDE <strong>1.5×</strong></span>
+    <span class="pref bolt-ref">⚡ BOLT <strong>2–5×</strong></span>
   </div>
 </div>
 
@@ -259,13 +275,38 @@ function placeBets(){if(!canAfford())return false;balance=+(balance-totalBet()).
 // Outer 7 slot indices on each side = wide slots (balls naturally drift away)
 function isWideSlot(slotIndex){ return slotIndex<=6 || slotIndex>=30; }
 
-function calcPayout(ballCount, isHot, isWide) {
+function calcPayout(ballCount, isHot, isWide, lightMult) {
   const base=CONFIG.rtp.payoutTable[Math.min(ballCount,5)];
   let mult=isHot ? Math.round(base*CONFIG.hotNumbers.multiplier) : base;
-  if (isWide) mult=Math.round(mult*1.5);
+  if (isWide)      mult=Math.round(mult*1.5);
+  if (lightMult>1) mult=Math.round(mult*lightMult);
   const win=+(stake*mult).toFixed(2);
   lastWin=win; balance=+(balance+win).toFixed(2);
-  return {mult,win,isHot,isWide};
+  return {mult,win,isHot,isWide,lightMult};
+}
+
+// ─── LIGHTNING MULTIPLIERS ───────────────────────────────────────────────────
+// Map of { number → multiplier (2-5) } — refreshed each round before drop
+let lightningNums=new Map();
+
+function clearLightningUI(){
+  document.querySelectorAll('.bolt-lit,.bolt-strike').forEach(b=>{
+    b.classList.remove('bolt-lit','bolt-strike');
+    delete b.dataset.lmult;
+  });
+}
+
+function animateLightning(entries, i, done){
+  if(i>=entries.length){ setTimeout(done,260); return; }
+  const [num,mult]=entries[i];
+  const btn=document.querySelector(`[data-num="${num}"]`);
+  if(btn){
+    btn.dataset.lmult=`${mult}×`;
+    btn.classList.remove('bolt-strike');
+    void btn.offsetWidth; // force reflow to restart animation
+    btn.classList.add('bolt-strike','bolt-lit');
+  }
+  setTimeout(()=>animateLightning(entries,i+1,done), 420);
 }
 
 // ─── HOT NUMBERS ─────────────────────────────────────────────────────────────
@@ -676,7 +717,25 @@ function onClear(){
 function onDrop(){
   if(state!==S.BETTING||!canAfford())return;
   if(!placeBets()){showStatus('Insufficient balance!');return;}
-  resetRound();setState(S.DROPPING);spawnBall(false);
+  resetRound();
+
+  // Pick 3 random lightning numbers (can include selected numbers for extra drama)
+  const pool=Array.from({length:37},(_,i)=>i);
+  for(let i=0;i<3&&pool.length;i++){
+    const idx=Math.floor(Math.random()*pool.length);
+    const num=pool.splice(idx,1)[0];
+    const mult=2+Math.floor(Math.random()*4); // 2–5
+    lightningNums.set(num,mult);
+  }
+
+  setState(S.DROPPING);
+  showStatus('⚡ Lightning multipliers!');
+
+  // Animate bolts then launch ball
+  animateLightning(Array.from(lightningNums.entries()),0,()=>{
+    showStatus('');
+    spawnBall(false);
+  });
 }
 
 function resetRound(){
@@ -686,6 +745,7 @@ function resetRound(){
   winGlow=0;winningNum=null;showMiss=false;
   countup={current:0,target:0,win:0,active:false,isHot:false};
   stage2Anim.active=false;flashAlpha=0;shakeDecay=0;
+  lightningNums.clear();clearLightningUI();
 }
 
 function spawnBall(isCascade){
@@ -782,7 +842,8 @@ function showPayout(){
   const ballsInWin=slotCounts[winSlot]||0;
   const isHot=hotNums.has(winningNum);
   const wide=isWideSlot(winSlot);
-  const {mult,win}=calcPayout(ballsInWin,isHot,wide);
+  const lightMult=lightningNums.get(winningNum)||1;
+  const {mult,win}=calcPayout(ballsInWin,isHot,wide,lightMult);
 
   flashAlpha=0.6;winGlow=1;
   if (stake>=10){shakeDecay=0.8;}
@@ -796,7 +857,7 @@ function showPayout(){
   const pMult=stake>=10?2:stake>=5?1.5:1;
   spawnParticles(winSlotX,SLOT_TOP,Math.round(pCount*pMult),pCols);
 
-  const bonusTags=(isHot?' 🔥':'')+(wide?' ◀▶':``);
+  const bonusTags=(isHot?' 🔥':'')+(wide?' ◀▶':'')+(lightMult>1?` ⚡${lightMult}×`:'');
   showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${bonusTags} — £${win.toFixed(2)}`);
 
   setTimeout(()=>{
