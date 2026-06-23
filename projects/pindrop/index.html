@@ -1,252 +1,542 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PinDrop — Bagatelle</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: #080810;
-      color: #e0e8f0;
-      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      min-height: 100vh;
-      padding-bottom: 24px;
-    }
-
-    #app {
-      width: 800px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    /* ── Header ─────────────────────────────────────────── */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 20px;
-      background: rgba(255,255,255,0.025);
-      border-bottom: 1px solid rgba(240,192,64,0.25);
-    }
-
-    #logo {
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 5px;
-      color: #ffffff;
-    }
-    #logo span { color: #f0c040; }
-
-    #balance-info {
-      display: flex;
-      gap: 28px;
-      font-size: 13px;
-      color: #667788;
-    }
-    #balance-info strong { color: #f0c040; font-size: 15px; }
-
-    /* ── Canvas ──────────────────────────────────────────── */
-    #gameCanvas {
-      display: block;
-      border-left:  1px solid rgba(255,255,255,0.06);
-      border-right: 1px solid rgba(255,255,255,0.06);
-      background: #0d0d1a;
-    }
-
-    /* ── Bet table ───────────────────────────────────────── */
-    #bet-table {
-      display: flex;
-      align-items: stretch;
-      gap: 3px;
-      padding: 6px 4px;
-      background: rgba(0,35,16,0.55);
-      border-top:    1px solid rgba(0,180,70,0.18);
-      border-bottom: 1px solid rgba(0,180,70,0.18);
-    }
-
-    .bet-num {
-      height: 38px;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 3px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
-      color: #ffffff;
-      transition: transform 0.1s, border-color 0.1s, box-shadow 0.1s;
-      line-height: 1;
-    }
-    .bet-num:hover:not(:disabled) {
-      transform: scaleY(1.12);
-      border-color: #f0c040;
-      z-index: 1;
-    }
-    .bet-num.selected {
-      border-color: #f0c040 !important;
-      box-shadow: 0 0 12px rgba(240,192,64,0.6), inset 0 0 10px rgba(240,192,64,0.2);
-    }
-    .bet-num:disabled {
-      opacity: 0.38;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .bet-num.green  { background: #1a6b30; width: 38px; flex-shrink: 0; font-size: 14px; }
-    .bet-num.red    { background: #7a1515; }
-    .bet-num.black  { background: #181828; }
-
-    #bet-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      grid-template-rows: repeat(3, 38px);
-      gap: 3px;
-      flex: 1;
-    }
-
-    /* ── Controls ────────────────────────────────────────── */
-    #controls {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 10px 14px;
-      background: rgba(0,0,0,0.35);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      flex-wrap: wrap;
-    }
-
-    #stake-area {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #556677;
-    }
-
-    #stake-btns {
-      display: flex;
-      gap: 5px;
-    }
-
-    .stake-btn {
-      padding: 5px 13px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 4px;
-      color: #99aabb;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: border-color 0.12s, color 0.12s, background 0.12s;
-    }
-    .stake-btn:hover:not(:disabled) { border-color: #f0c040; color: #f0c040; }
-    .stake-btn.active {
-      background: rgba(240,192,64,0.14);
-      border-color: #f0c040;
-      color: #f0c040;
-    }
-    .stake-btn:disabled { opacity: 0.38; cursor: not-allowed; }
-
-    #drop-btn {
-      padding: 9px 26px;
-      background: linear-gradient(135deg, #c8a020, #f0c040);
-      border: none;
-      border-radius: 5px;
-      color: #0d0d1a;
-      font-size: 14px;
-      font-weight: 900;
-      letter-spacing: 2px;
-      cursor: pointer;
-      transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
-      text-transform: uppercase;
-    }
-    #drop-btn:hover:not(:disabled) {
-      background: linear-gradient(135deg, #d4aa28, #ffe060);
-      transform: translateY(-2px);
-      box-shadow: 0 5px 22px rgba(240,192,64,0.45);
-    }
-    #drop-btn:disabled { opacity: 0.28; cursor: not-allowed; transform: none; box-shadow: none; }
-
-    #status-msg {
-      margin-left: auto;
-      font-size: 12px;
-      color: #556677;
-      font-style: italic;
-      max-width: 260px;
-      text-align: right;
-    }
-
-    /* ── Payout table reference ──────────────────────────── */
-    #payout-ref {
-      display: flex;
-      justify-content: center;
-      gap: 16px;
-      padding: 8px 16px;
-      background: rgba(255,255,255,0.018);
-      border-top: 1px solid rgba(255,255,255,0.05);
-      flex-wrap: wrap;
-    }
-    .pref {
-      font-size: 11px;
-      color: #445566;
-    }
-    .pref strong { color: #f0c040; margin-left: 3px; }
-
-    /* ── Responsive ──────────────────────────────────────── */
-    @media (max-width: 820px) {
-      body { padding: 0; }
-      #app { width: 100%; }
-      #gameCanvas { width: 100%; height: auto; }
-      #bet-grid { grid-template-columns: repeat(12, 1fr); }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PinDrop — Bagatelle</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#080810;color:#e0e8f0;font-family:'Segoe UI',system-ui,Arial,sans-serif;
+  display:flex;justify-content:center;min-height:100vh;padding-bottom:24px}
+#app{width:800px;display:flex;flex-direction:column;align-items:stretch}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;
+  background:rgba(255,255,255,0.025);border-bottom:1px solid rgba(240,192,64,0.25)}
+#logo{font-size:24px;font-weight:900;letter-spacing:5px;color:#fff}
+#logo span{color:#f0c040}
+#balance-info{display:flex;gap:28px;font-size:13px;color:#667788}
+#balance-info strong{color:#f0c040;font-size:15px}
+#gameCanvas{display:block;background:#0d0d1a;border-left:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.06)}
+#bet-table{display:flex;align-items:stretch;gap:3px;padding:6px 4px;
+  background:rgba(0,35,16,0.55);border-top:1px solid rgba(0,180,70,0.18);
+  border-bottom:1px solid rgba(0,180,70,0.18)}
+.bet-num{height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:3px;cursor:pointer;
+  font-size:11px;font-weight:700;color:#fff;transition:transform .1s,border-color .1s,box-shadow .1s;line-height:1}
+.bet-num:hover:not(:disabled){transform:scaleY(1.12);border-color:#f0c040;z-index:1}
+.bet-num.selected{border-color:#f0c040!important;
+  box-shadow:0 0 12px rgba(240,192,64,.6),inset 0 0 10px rgba(240,192,64,.2)}
+.bet-num:disabled{opacity:.38;cursor:not-allowed;transform:none}
+.bet-num.green{background:#1a6b30;width:38px;flex-shrink:0;font-size:14px}
+.bet-num.red{background:#7a1515}
+.bet-num.black{background:#181828}
+#bet-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(3,38px);gap:3px;flex:1}
+#controls{display:flex;align-items:center;gap:14px;padding:10px 14px;
+  background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+#stake-area{display:flex;align-items:center;gap:8px;font-size:12px;color:#556677}
+#stake-btns{display:flex;gap:5px}
+.stake-btn{padding:5px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+  border-radius:4px;color:#99aabb;font-size:13px;font-weight:600;cursor:pointer;
+  transition:border-color .12s,color .12s,background .12s}
+.stake-btn:hover:not(:disabled){border-color:#f0c040;color:#f0c040}
+.stake-btn.active{background:rgba(240,192,64,.14);border-color:#f0c040;color:#f0c040}
+.stake-btn:disabled{opacity:.38;cursor:not-allowed}
+#drop-btn{padding:9px 26px;background:linear-gradient(135deg,#c8a020,#f0c040);border:none;
+  border-radius:5px;color:#0d0d1a;font-size:14px;font-weight:900;letter-spacing:2px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s,background .12s;text-transform:uppercase}
+#drop-btn:hover:not(:disabled){background:linear-gradient(135deg,#d4aa28,#ffe060);
+  transform:translateY(-2px);box-shadow:0 5px 22px rgba(240,192,64,.45)}
+#drop-btn:disabled{opacity:.28;cursor:not-allowed;transform:none;box-shadow:none}
+#status-msg{margin-left:auto;font-size:12px;color:#556677;font-style:italic;max-width:280px;text-align:right}
+#payout-ref{display:flex;justify-content:center;gap:16px;padding:8px 16px;
+  background:rgba(255,255,255,.018);border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+.pref{font-size:11px;color:#445566}
+.pref strong{color:#f0c040;margin-left:3px}
+@media(max-width:820px){body{padding:0}#app{width:100%}
+  #gameCanvas{width:100%;height:auto}#bet-grid{grid-template-columns:repeat(12,1fr)}}
+</style>
 </head>
 <body>
-  <div id="app">
-
-    <header>
-      <div id="logo">PIN<span>DROP</span></div>
-      <div id="balance-info">
-        <span>Balance: <strong>£<span id="balance-val">100.00</span></strong></span>
-        <span>Last win: <strong>£<span id="lastwin-val">0.00</span></strong></span>
-      </div>
-    </header>
-
-    <canvas id="gameCanvas" width="800" height="460"></canvas>
-
-    <div id="bet-table"></div>
-
-    <div id="controls">
-      <div id="stake-area">
-        <span>Stake:</span>
-        <div id="stake-btns"></div>
-      </div>
-      <button id="drop-btn" disabled>DROP BALL</button>
-      <div id="status-msg">Loading…</div>
+<div id="app">
+  <header>
+    <div id="logo">PIN<span>DROP</span></div>
+    <div id="balance-info">
+      <span>Balance: <strong>£<span id="balance-val">100.00</span></strong></span>
+      <span>Last win: <strong>£<span id="lastwin-val">0.00</span></strong></span>
     </div>
-
-    <div id="payout-ref">
-      <span class="pref">0 balls <strong>70×</strong></span>
-      <span class="pref">1 ball <strong>15×</strong></span>
-      <span class="pref">2 balls <strong>20×</strong></span>
-      <span class="pref">3 balls <strong>30×</strong></span>
-      <span class="pref">4 balls <strong>50×</strong></span>
-      <span class="pref">5+ balls <strong>100×</strong></span>
-    </div>
-
+  </header>
+  <canvas id="gameCanvas" width="800" height="460"></canvas>
+  <div id="bet-table"></div>
+  <div id="controls">
+    <div id="stake-area"><span>Stake:</span><div id="stake-btns"></div></div>
+    <button id="drop-btn" disabled>DROP BALL</button>
+    <div id="status-msg">Select a number and drop!</div>
   </div>
+  <div id="payout-ref">
+    <span class="pref">0 balls <strong>70×</strong></span>
+    <span class="pref">1 ball <strong>15×</strong></span>
+    <span class="pref">2 balls <strong>20×</strong></span>
+    <span class="pref">3 balls <strong>30×</strong></span>
+    <span class="pref">4 balls <strong>50×</strong></span>
+    <span class="pref">5+ balls <strong>100×</strong></span>
+  </div>
+</div>
 
-  <!-- Matter.js physics engine -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+// ─── CONFIG ─────────────────────────────────────────────────────────────────
+const CONFIG = {
+  branding:  { primaryColour: '#f0c040', backgroundColor: '#0d0d1a' },
+  gameplay:  { stakeOptions: [1,2,5,10], startingBalance: 100,
+               stage2BallCount: 30, stage2BallInterval: 200 },
+  rtp:       { payoutTable: { 0:70, 1:15, 2:20, 3:30, 4:50, 5:100 } },
+};
 
-  <script src="config.js"></script>
-  <script src="physics.js"></script>
-  <script src="betting.js"></script>
-  <script src="renderer.js"></script>
-  <script src="ui.js"></script>
-  <script src="game.js"></script>
+// ─── PHYSICS ENGINE ──────────────────────────────────────────────────────────
+// Lightweight custom physics: circles + axis-aligned rect obstacles
+class PhysicsBall {
+  constructor(x, y, r) {
+    this.x = x; this.y = y; this.r = r;
+    this.vx = (Math.random() - 0.5) * 0.6;
+    this.vy = 0;
+    this.active  = true;
+    this.settled = false;
+    this.removed = false;
+    this.slotIndex = -1;
+    this.isCascade = false;
+    this.processed = false;
+  }
+}
+
+const GRAVITY   = 0.28;
+const RESTITUTION = 0.46;
+const AIR_FRIC  = 0.9985;
+const SUBSTEPS  = 3;
+
+// Resolve ball vs static circle (pin)
+function resolvePin(ball, pin) {
+  const dx   = ball.x - pin.x;
+  const dy   = ball.y - pin.y;
+  const dist2 = dx*dx + dy*dy;
+  const minD  = ball.r + pin.r;
+  if (dist2 >= minD * minD) return;
+  const dist = Math.sqrt(dist2) || 0.001;
+  const nx = dx / dist, ny = dy / dist;
+  // push out
+  const overlap = minD - dist;
+  ball.x += nx * overlap;
+  ball.y += ny * overlap;
+  // reflect if moving toward pin
+  const dot = ball.vx * nx + ball.vy * ny;
+  if (dot < 0) {
+    ball.vx -= (1 + RESTITUTION) * dot * nx + (Math.random()-0.5)*0.15;
+    ball.vy -= (1 + RESTITUTION) * dot * ny;
+  }
+}
+
+// Resolve ball vs axis-aligned rectangle {x,y,w,h}
+function resolveRect(ball, rect) {
+  const cx = Math.max(rect.x, Math.min(ball.x, rect.x + rect.w));
+  const cy = Math.max(rect.y, Math.min(ball.y, rect.y + rect.h));
+  const dx = ball.x - cx, dy = ball.y - cy;
+  const dist2 = dx*dx + dy*dy;
+  if (dist2 >= ball.r * ball.r) return;
+  const dist = Math.sqrt(dist2) || 0.001;
+  const nx = dx / dist, ny = dy / dist;
+  ball.x += nx * (ball.r - dist);
+  ball.y += ny * (ball.r - dist);
+  const dot = ball.vx * nx + ball.vy * ny;
+  if (dot < 0) {
+    ball.vx -= (1 + RESTITUTION) * dot * nx;
+    ball.vy -= (1 + RESTITUTION) * dot * ny;
+  }
+}
+
+function stepPhysics(balls, pins, rects) {
+  const g = GRAVITY / SUBSTEPS;
+  for (let s = 0; s < SUBSTEPS; s++) {
+    for (const ball of balls) {
+      if (!ball.active || ball.removed) continue;
+      ball.vy += g;
+      ball.vx *= AIR_FRIC;
+      ball.vy *= AIR_FRIC;
+      ball.x  += ball.vx / SUBSTEPS;
+      ball.y  += ball.vy / SUBSTEPS;
+      for (const pin of pins)   resolvePin(ball, pin);
+      for (const rect of rects) resolveRect(ball, rect);
+    }
+  }
+}
+
+// ─── WORLD SETUP ────────────────────────────────────────────────────────────
+const CW       = 800;
+const CH       = 460;
+const SLOT_TOP = 368;
+const SLOT_N   = 37;
+const SLOT_W   = CW / SLOT_N;
+const PIN_R    = 5.5;
+const BALL_R   = 8;
+
+// Pin grid: 8 rows, alternating 11/10 pins
+const PIN_SPACING_X = 70;
+const PIN_SPACING_Y = 38;
+const GRID_TOP      = 58;
+
+const PINS = [];
+for (let row = 0; row < 8; row++) {
+  const even  = row % 2 === 0;
+  const count = even ? 11 : 10;
+  const startX = even ? 35 : 35 + PIN_SPACING_X / 2;
+  const y      = GRID_TOP + 10 + row * PIN_SPACING_Y;
+  for (let col = 0; col < count; col++) {
+    PINS.push({ x: startX + col * PIN_SPACING_X, y, r: PIN_R });
+  }
+}
+
+// Static rects: left/right walls, floor, slot dividers
+const RECTS = [];
+RECTS.push({ x:-12, y:0,    w:12, h:CH+20 }); // left wall
+RECTS.push({ x:CW,  y:0,    w:12, h:CH+20 }); // right wall
+RECTS.push({ x:0,   y:CH,   w:CW, h:12    }); // floor
+// Slot dividers
+const DIV_W = 3;
+for (let i = 1; i < SLOT_N; i++) {
+  RECTS.push({ x: i*SLOT_W - DIV_W/2, y: SLOT_TOP, w: DIV_W, h: CH - SLOT_TOP + 12 });
+}
+
+// Slot number mapping (European roulette wheel order)
+const SLOT_NUMBERS = [
+  0,32,15,19, 4,21, 2,25,17,34,
+  6,27,13,36,11,30, 8,23,10, 5,
+ 24,16,33, 1,20,14,31, 9,22,18,
+ 29, 7,28,12,35, 3,26
+];
+const NUMBER_TO_SLOT = {};
+SLOT_NUMBERS.forEach((n,i) => { NUMBER_TO_SLOT[n] = i; });
+
+function getSlotIndex(x) {
+  return Math.max(0, Math.min(SLOT_N-1, Math.floor(x / SLOT_W)));
+}
+
+// ─── BETTING ────────────────────────────────────────────────────────────────
+let balance  = CONFIG.gameplay.startingBalance;
+let stake    = CONFIG.gameplay.stakeOptions[0];
+let selNum   = null;
+let lastWin  = 0;
+
+function placeBet() {
+  if (selNum === null || balance < stake) return false;
+  balance = +(balance - stake).toFixed(2);
+  return true;
+}
+function calcPayout(ballCount) {
+  const table = CONFIG.rtp.payoutTable;
+  const mult  = table[Math.min(ballCount, 5)];
+  const win   = +(stake * mult).toFixed(2);
+  lastWin  = win;
+  balance  = +(balance + win).toFixed(2);
+  return { mult, win };
+}
+
+// ─── RENDERER ───────────────────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');
+const RED_N  = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+
+function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
+  // Background
+  ctx.fillStyle = CONFIG.branding.backgroundColor;
+  ctx.fillRect(0, 0, CW, CH);
+
+  // Pins
+  for (const { x, y } of PINS) {
+    const g = ctx.createRadialGradient(x-1.5, y-1.5, 0, x, y, PIN_R+2);
+    g.addColorStop(0, '#d8e8f0'); g.addColorStop(1, '#3a5060');
+    ctx.beginPath(); ctx.arc(x, y, PIN_R+1, 0, Math.PI*2);
+    ctx.fillStyle = g; ctx.fill();
+  }
+
+  // Win glow behind slot
+  if (selNum !== null && winGlow > 0) {
+    const idx = NUMBER_TO_SLOT[selNum];
+    if (idx !== undefined) {
+      const sx = idx * SLOT_W;
+      const g  = ctx.createLinearGradient(sx, SLOT_TOP, sx, CH);
+      g.addColorStop(0, `rgba(240,192,64,${(winGlow*0.55).toFixed(2)})`);
+      g.addColorStop(1, `rgba(240,192,64,${(winGlow*0.05).toFixed(2)})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(sx+1, SLOT_TOP+2, SLOT_W-2, CH-SLOT_TOP-3);
+    }
+  }
+
+  // Slots
+  const slotH = CH - SLOT_TOP;
+  for (let i = 0; i < SLOT_N; i++) {
+    const sx  = i * SLOT_W;
+    const num = SLOT_NUMBERS[i];
+    const isW = num === selNum;
+    const cnt = slotCounts ? (slotCounts[i]||0) : 0;
+    ctx.fillStyle = isW ? 'rgba(240,192,64,0.10)' : 'rgba(255,255,255,0.02)';
+    ctx.fillRect(sx+1, SLOT_TOP+2, SLOT_W-2, slotH-3);
+    ctx.font = '8px monospace'; ctx.textAlign = 'center';
+    ctx.fillStyle = isW ? CONFIG.branding.primaryColour : (RED_N.has(num) ? '#773333' : '#335566');
+    ctx.fillText(num, sx + SLOT_W/2, SLOT_TOP+13);
+    if (cnt > 0) {
+      ctx.font = `bold ${cnt>9?9:11}px monospace`;
+      ctx.fillStyle = isW ? CONFIG.branding.primaryColour : '#6688aa';
+      ctx.fillText(cnt, sx + SLOT_W/2, CH-6);
+    }
+  }
+  // Divider lines
+  ctx.fillStyle = '#253545';
+  for (let i = 0; i <= SLOT_N; i++) ctx.fillRect(i*SLOT_W, SLOT_TOP, 1, slotH);
+  ctx.fillStyle = '#3a5264'; ctx.fillRect(0, SLOT_TOP, CW, 2);
+
+  // Balls
+  for (const ball of balls) {
+    if (ball.removed) continue;
+    const { x, y, isCascade } = ball;
+    const r = BALL_R;
+    const halo = ctx.createRadialGradient(x,y,0,x,y,r*3.2);
+    halo.addColorStop(0, isCascade ? 'rgba(140,205,255,0.28)' : 'rgba(255,255,255,0.28)');
+    halo.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(x, y, r*3.2, 0, Math.PI*2);
+    ctx.fillStyle = halo; ctx.fill();
+    const surf = ctx.createRadialGradient(x-r*.35, y-r*.35, 0, x, y, r);
+    surf.addColorStop(0, '#ffffff');
+    surf.addColorStop(0.55, isCascade ? '#aad8f8' : '#d8e8f4');
+    surf.addColorStop(1, '#607890');
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = surf; ctx.fill();
+  }
+
+  // Overlay
+  if (overlayText) {
+    ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    ctx.fillRect(0, 0, CW, CH);
+    ctx.save();
+    ctx.shadowColor = CONFIG.branding.primaryColour; ctx.shadowBlur = 36;
+    ctx.font = 'bold 58px "Segoe UI",Arial,sans-serif';
+    ctx.textAlign = 'center'; ctx.fillStyle = CONFIG.branding.primaryColour;
+    ctx.fillText(overlayText, CW/2, CH/2+20);
+    ctx.restore();
+  }
+
+  // Payout popup
+  if (payoutPopup) {
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.shadowColor = CONFIG.branding.primaryColour; ctx.shadowBlur = 28;
+    ctx.font = 'bold 52px "Segoe UI",Arial,sans-serif';
+    ctx.fillStyle = CONFIG.branding.primaryColour;
+    ctx.fillText(`${payoutPopup.mult}×`, CW/2, CH/2 - 8);
+    ctx.shadowBlur = 12;
+    ctx.font = 'bold 30px "Segoe UI",Arial,sans-serif';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`£${payoutPopup.win.toFixed(2)}`, CW/2, CH/2+34);
+    ctx.restore();
+  }
+}
+
+// ─── UI BUILDERS ────────────────────────────────────────────────────────────
+function buildBetTable() {
+  const container = document.getElementById('bet-table');
+  const zero = document.createElement('button');
+  zero.className = 'bet-num green'; zero.textContent = '0'; zero.dataset.num = '0';
+  container.appendChild(zero);
+  const grid = document.createElement('div'); grid.id = 'bet-grid';
+  for (let row = 3; row >= 1; row--) {
+    for (let col = 0; col < 12; col++) {
+      const num = col*3 + row;
+      const btn = document.createElement('button');
+      btn.className = `bet-num ${RED_N.has(num) ? 'red' : 'black'}`;
+      btn.textContent = num; btn.dataset.num = String(num);
+      grid.appendChild(btn);
+    }
+  }
+  container.appendChild(grid);
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('[data-num]');
+    if (!btn || btn.disabled) return;
+    document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    onSelectNumber(parseInt(btn.dataset.num, 10));
+  });
+}
+
+function buildStakeButtons() {
+  const wrap = document.getElementById('stake-btns');
+  CONFIG.gameplay.stakeOptions.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'stake-btn' + (i===0?' active':'');
+    btn.textContent = `£${s}`; btn.dataset.stake = String(s);
+    wrap.appendChild(btn);
+  });
+  wrap.addEventListener('click', e => {
+    const btn = e.target.closest('.stake-btn');
+    if (!btn || btn.disabled) return;
+    wrap.querySelectorAll('.stake-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    stake = parseFloat(btn.dataset.stake);
+  });
+}
+
+function setInteractive(on) {
+  document.querySelectorAll('.bet-num,.stake-btn').forEach(b => { b.disabled = !on; });
+  if (!on) document.getElementById('drop-btn').disabled = true;
+}
+function setDropEnabled(on) { document.getElementById('drop-btn').disabled = !on; }
+function updateBalance() {
+  document.getElementById('balance-val').textContent = balance.toFixed(2);
+  document.getElementById('lastwin-val').textContent = lastWin.toFixed(2);
+}
+function showStatus(msg) { document.getElementById('status-msg').textContent = msg; }
+
+// ─── GAME STATE MACHINE ──────────────────────────────────────────────────────
+const S = { IDLE:0, BETTING:1, DROPPING:2, CASCADE:3, PAYOUT:4 };
+let state = S.IDLE;
+
+let balls      = [];
+let slotCounts = new Array(37).fill(0);
+let cascadeDropped = 0;
+let cascadeTimer   = null;
+let payoutShown    = false;
+let winGlow        = 0;
+let overlayText    = null;
+let payoutPopup    = null;
+
+function setState(s) {
+  state = s;
+  const on = (s === S.IDLE || s === S.BETTING);
+  setInteractive(on);
+  if (s === S.BETTING) setDropEnabled(selNum !== null);
+  updateBalance();
+}
+
+function onSelectNumber(num) {
+  if (state !== S.IDLE && state !== S.BETTING) return;
+  selNum = num;
+  if (state === S.IDLE) setState(S.BETTING);
+  else setDropEnabled(true);
+}
+
+function onDrop() {
+  if (state !== S.BETTING || selNum === null) return;
+  if (!placeBet()) { showStatus('Insufficient balance!'); return; }
+  resetRound();
+  setState(S.DROPPING);
+  spawnBall(false);
+}
+
+function resetRound() {
+  clearTimeout(cascadeTimer);
+  balls = []; slotCounts = new Array(37).fill(0);
+  cascadeDropped = 0; payoutShown = false;
+  winGlow = 0; overlayText = null; payoutPopup = null;
+}
+
+function spawnBall(isCascade) {
+  const x = 60 + Math.random() * (CW - 120);
+  const b = new PhysicsBall(x, GRID_TOP - 14, BALL_R);
+  b.isCascade = isCascade;
+  balls.push(b);
+}
+
+function startCascade() {
+  overlayText = 'STAGE 2';
+  setTimeout(() => { if (overlayText === 'STAGE 2') overlayText = null; }, 1200);
+  setState(S.CASCADE); showStatus('30 balls dropping…');
+  cascadeDropped = 0; payoutShown = false;
+  dropNextCascade();
+  // safety timeout
+  setTimeout(() => {
+    if (state === S.CASCADE && !payoutShown) { payoutShown = true; showPayout(); }
+  }, CONFIG.gameplay.stage2BallCount * CONFIG.gameplay.stage2BallInterval + 12000);
+}
+
+function dropNextCascade() {
+  if (cascadeDropped >= CONFIG.gameplay.stage2BallCount) return;
+  cascadeDropped++;
+  spawnBall(true);
+  if (cascadeDropped < CONFIG.gameplay.stage2BallCount)
+    cascadeTimer = setTimeout(dropNextCascade, CONFIG.gameplay.stage2BallInterval);
+}
+
+function checkSettlement() {
+  for (const ball of balls) {
+    if (ball.settled || ball.removed) continue;
+    if (ball.y > SLOT_TOP + 22) {
+      ball.settled   = true;
+      ball.slotIndex = getSlotIndex(ball.x);
+      if (ball.isCascade) slotCounts[ball.slotIndex]++;
+      setTimeout(() => { ball.removed = true; ball.active = false; }, 600);
+    }
+  }
+}
+
+function checkStage1() {
+  for (const ball of balls) {
+    if (ball.processed || !ball.settled || ball.isCascade) continue;
+    ball.processed = true;
+    const landed = SLOT_NUMBERS[ball.slotIndex];
+    if (landed === selNum) {
+      winGlow = 1;
+      setState(S.PAYOUT); // lock input during pause
+      setTimeout(startCascade, 950);
+    } else {
+      overlayText = 'MISS';
+      setState(S.PAYOUT);
+      setTimeout(() => {
+        overlayText = null; balls = [];
+        document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
+        selNum = null;
+        setState(S.IDLE); showStatus('Select a number and drop!');
+      }, 1600);
+    }
+  }
+}
+
+function checkCascadeComplete() {
+  if (state !== S.CASCADE || payoutShown) return;
+  if (cascadeDropped < CONFIG.gameplay.stage2BallCount) return;
+  const settled = balls.filter(b => b.isCascade && b.settled).length;
+  if (settled >= CONFIG.gameplay.stage2BallCount) {
+    payoutShown = true; setTimeout(showPayout, 650);
+  }
+}
+
+function showPayout() {
+  const winSlot    = NUMBER_TO_SLOT[selNum];
+  const ballsInWin = slotCounts[winSlot] || 0;
+  const { mult, win } = calcPayout(ballsInWin);
+  winGlow = 1; payoutPopup = { mult, win };
+  setState(S.PAYOUT);
+  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${selNum} — ${mult}× — £${win.toFixed(2)}`);
+  setTimeout(() => {
+    payoutPopup = null; winGlow = 0; balls = [];
+    slotCounts = new Array(37).fill(0);
+    document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
+    selNum = null;
+    setState(S.IDLE); showStatus('Select a number and drop!');
+  }, 4200);
+}
+
+// ─── GAME LOOP ───────────────────────────────────────────────────────────────
+function gameLoop() {
+  stepPhysics(balls, PINS, RECTS);
+  checkSettlement();
+  checkStage1();
+  if (state === S.CASCADE) checkCascadeComplete();
+  if (state === S.CASCADE && winGlow > 0)
+    winGlow = 0.55 + 0.45 * Math.abs(Math.sin(Date.now() * 0.0045));
+  renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup);
+  requestAnimationFrame(gameLoop);
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+buildBetTable();
+buildStakeButtons();
+document.getElementById('drop-btn').addEventListener('click', onDrop);
+setState(S.IDLE);
+requestAnimationFrame(gameLoop);
+</script>
 </body>
 </html>
