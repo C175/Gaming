@@ -87,9 +87,9 @@ const Game = (() => {
 
     dropNextCascadeBall();
 
-    // Safety timeout: auto-resolve 12 s after last ball launches
+    // Safety timeout: auto-resolve 5 s after last ball launches
     const safetyDelay =
-      CONFIG.gameplay.stage2BallCount * CONFIG.gameplay.stage2BallInterval + 12000;
+      CONFIG.gameplay.stage2BallCount * CONFIG.gameplay.stage2BallInterval + 5000;
     setTimeout(() => {
       if (state === S.CASCADE && !payoutShown) {
         payoutShown = true;
