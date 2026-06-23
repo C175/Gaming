@@ -106,6 +106,9 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .pref{font-size:11px;color:#3d5066;font-family:'Exo 2',sans-serif}
 .pref strong{color:#f0c040;margin-left:3px}
 .pref.hot-ref strong{color:#ff8800}
+.pref.wide-ref{color:#4488bb}.pref.wide-ref strong{color:#66ccff}
+.bet-num.wide{outline:1px solid rgba(100,200,255,0.25)}
+.bet-num.wide.selected{outline:2px solid rgba(100,200,255,0.7)}
 
 @media(max-width:820px){body{padding:0}#app{width:100%}
   #gameCanvas{width:100%;height:auto}#bet-grid{grid-template-columns:repeat(12,1fr)}}
@@ -141,6 +144,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <span class="pref">4 balls <strong>50×</strong></span>
     <span class="pref">5+ balls <strong>100×</strong></span>
     <span class="pref hot-ref" id="hot-ref" style="display:none">🔥 HOT <strong>1.5×</strong></span>
+    <span class="pref wide-ref">◀▶ WIDE <strong>1.5×</strong></span>
   </div>
 </div>
 
@@ -252,12 +256,16 @@ let balance=CONFIG.gameplay.startingBalance, stake=1, selNums=new Set(), lastWin
 function totalBet(){return +(stake*selNums.size).toFixed(2);}
 function canAfford(){return selNums.size>0&&balance>=totalBet();}
 function placeBets(){if(!canAfford())return false;balance=+(balance-totalBet()).toFixed(2);return true;}
-function calcPayout(ballCount, isHot) {
+// Outer 7 slot indices on each side = wide slots (balls naturally drift away)
+function isWideSlot(slotIndex){ return slotIndex<=6 || slotIndex>=30; }
+
+function calcPayout(ballCount, isHot, isWide) {
   const base=CONFIG.rtp.payoutTable[Math.min(ballCount,5)];
-  const mult=isHot ? Math.round(base*CONFIG.hotNumbers.multiplier) : base;
+  let mult=isHot ? Math.round(base*CONFIG.hotNumbers.multiplier) : base;
+  if (isWide) mult=Math.round(mult*1.5);
   const win=+(stake*mult).toFixed(2);
   lastWin=win; balance=+(balance+win).toFixed(2);
-  return {mult,win,isHot};
+  return {mult,win,isHot,isWide};
 }
 
 // ─── HOT NUMBERS ─────────────────────────────────────────────────────────────
@@ -571,17 +579,21 @@ function renderFrame(balls,slotCounts,winningNum,winGlow,showMiss) {
 }
 
 // ─── UI ──────────────────────────────────────────────────────────────────────
+// Numbers whose slot index falls in the outer 7 on each side
+const WIDE_NUMS=new Set(SLOT_NUMBERS.filter((_,i)=>i<=6||i>=30));
+
 function buildBetTable() {
   const container=document.getElementById('bet-table');
   const zero=document.createElement('button');
-  zero.className='bet-num green';zero.textContent='0';zero.dataset.num='0';
+  // 0 is slot index 0 — a wide slot
+  zero.className='bet-num green wide';zero.textContent='0';zero.dataset.num='0';
   container.appendChild(zero);
   const grid=document.createElement('div');grid.id='bet-grid';
   for (let row=3;row>=1;row--) {
     for (let col=0;col<12;col++) {
       const num=col*3+row;
       const btn=document.createElement('button');
-      btn.className=`bet-num ${RED_N.has(num)?'red':'black'}`;
+      btn.className=`bet-num ${RED_N.has(num)?'red':'black'}${WIDE_NUMS.has(num)?' wide':''}`;
       btn.textContent=num;btn.dataset.num=String(num);grid.appendChild(btn);
     }
   }
@@ -679,7 +691,10 @@ function resetRound(){
 function spawnBall(isCascade){
   let x;
   if (isCascade) {
-    x=(CW/2-28)+Math.random()*56;
+    // Spawn within row-3 pin bounds (CW/2 ± PIN_SPACING_X), center-weighted
+    const ROW3_L = CW/2 - PIN_SPACING_X; // 326
+    const ROW3_R = CW/2 + PIN_SPACING_X; // 474
+    x = ROW3_L + ((Math.random() + Math.random()) / 2) * (ROW3_R - ROW3_L);
   } else {
     // Random drop across top third of board
     x=150+Math.random()*500;
@@ -766,7 +781,8 @@ function showPayout(){
   const winSlot=NUMBER_TO_SLOT[winningNum];
   const ballsInWin=slotCounts[winSlot]||0;
   const isHot=hotNums.has(winningNum);
-  const {mult,win}=calcPayout(ballsInWin,isHot);
+  const wide=isWideSlot(winSlot);
+  const {mult,win}=calcPayout(ballsInWin,isHot,wide);
 
   flashAlpha=0.6;winGlow=1;
   if (stake>=10){shakeDecay=0.8;}
@@ -780,7 +796,8 @@ function showPayout(){
   const pMult=stake>=10?2:stake>=5?1.5:1;
   spawnParticles(winSlotX,SLOT_TOP,Math.round(pCount*pMult),pCols);
 
-  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${isHot?' 🔥':''} — £${win.toFixed(2)}`);
+  const bonusTags=(isHot?' 🔥':'')+(wide?' ◀▶':``);
+  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${bonusTags} — £${win.toFixed(2)}`);
 
   setTimeout(()=>{
     winGlow=0;balls=[];slotCounts=new Array(37).fill(0);winningNum=null;shakeDecay=0;
