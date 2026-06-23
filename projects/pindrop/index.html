@@ -120,10 +120,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .pref{font-size:11px;color:#3d5066;font-family:'Exo 2',sans-serif}
 .pref strong{color:#f0c040;margin-left:3px}
 .pref.hot-ref strong{color:#ff8800}
-.pref.wide-ref{color:#b8860b}.pref.wide-ref strong{color:#f0c040}
+.pref.wide-ref{color:#4488bb}.pref.wide-ref strong{color:#66ccff}
 .pref.bolt-ref{color:#4466aa}.pref.bolt-ref strong{color:#aaddff}
-.bet-num.wide{outline:1px solid rgba(240,192,64,0.35);background-image:linear-gradient(180deg,rgba(240,192,64,0.08) 0%,rgba(240,192,64,0.03) 100%)}
-.bet-num.wide.selected{outline:2px solid rgba(240,192,64,0.8)}
+.bet-num.wide{outline:1px solid rgba(100,200,255,0.25)}
+.bet-num.wide.selected{outline:2px solid rgba(100,200,255,0.7)}
 /* Lightning bolt multiplier */
 @keyframes bolt-strike{
   0%  {background:rgba(220,235,255,0.97);box-shadow:0 0 32px 10px rgba(140,190,255,1),inset 0 0 20px rgba(200,220,255,0.9)}
@@ -241,14 +241,14 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <div id="status-msg">Select numbers and drop!</div>
   </div>
   <div id="payout-ref">
-    <span class="pref" title="Long shot outer numbers pay 98× with 0 cascade balls">0 balls <strong>65×</strong> <span style="font-size:9px;color:#b8860b">+long shot→98×</span></span>
+    <span class="pref" title="Wide slot adds 1.5× — outer numbers pay 98× with 0 cascade balls">0 balls <strong>65×</strong> <span style="font-size:9px;color:#5577aa">+wide→98×</span></span>
     <span class="pref">1 ball <strong>15×</strong></span>
     <span class="pref">2 balls <strong>20×</strong></span>
     <span class="pref">3 balls <strong>30×</strong></span>
     <span class="pref">4 balls <strong>50×</strong></span>
     <span class="pref">5+ balls <strong>100×</strong></span>
     <span class="pref hot-ref" id="hot-ref" style="display:none">🔥 HOT <strong>1.5×</strong></span>
-    <span class="pref wide-ref">🎯 LONG SHOT <strong>1.5×</strong></span>
+    <span class="pref wide-ref">◀▶ WIDE <strong>1.5×</strong></span>
     <span class="pref bolt-ref">⚡ BOLT <strong>2–5×</strong></span>
   </div>
   <div id="history-strip">
@@ -924,7 +924,7 @@ function drawCountup() {
     if (countup.isWide && countup.ballsInSlot===0){
       ctx.font='bold 13px "Orbitron",sans-serif';ctx.fillStyle='#66ccff';
       ctx.shadowColor='#44aaff';ctx.shadowBlur=10;
-      ctx.fillText('🎯 LONG SHOT BONUS',CW/2,CH/2+(countup.isHot?76:56));
+      ctx.fillText('◀▶ WIDE BONUS',CW/2,CH/2+(countup.isHot?76:56));
     }
   }
   ctx.restore();
@@ -1238,7 +1238,7 @@ function showPayout(){
   const pMult=stake>=10?2:stake>=5?1.5:1;
   spawnParticles(winSlotX,SLOT_TOP,Math.round(pCount*pMult),pCols);
 
-  const bonusTags=(isHot?' 🔥':'')+(wide?' 🎯':'')+(lightMult>1?` ⚡${lightMult}×`:'');
+  const bonusTags=(isHot?' 🔥':'')+(wide?' ◀▶':'')+(lightMult>1?` ⚡${lightMult}×`:'');
   showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${bonusTags} — £${win.toFixed(2)}`);
 
   setTimeout(fullReset, 3000);
@@ -1263,9 +1263,9 @@ function renderHistory(){
     const ballCls=e.landed===0?'green':isRed?'red':'black';
     const tags=[];
     if(e.hot) tags.push('🔥');
-    if(e.wide) tags.push('🎯 long shot');
+    if(e.wide) tags.push('◀▶');
     if(e.lightMult>1) tags.push(`⚡${e.lightMult}×`);
-    if(e.wide && e.ballsInSlot===0) tags.push('🎯 long shot bonus');
+    if(e.wide && e.ballsInSlot===0) tags.push('◀▶ wide bonus');
     row.innerHTML=`
       <span class="h-round">#${e.round}</span>
       <span class="h-ball ${ballCls}">${e.landed}</span>
