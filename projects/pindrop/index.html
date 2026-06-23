@@ -235,7 +235,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <div id="status-msg">Select numbers and drop!</div>
   </div>
   <div id="payout-ref">
-    <span class="pref">0 balls <strong>65×</strong></span>
+    <span class="pref" title="Wide slot adds 1.5× — outer numbers pay 98× with 0 cascade balls">0 balls <strong>65×</strong> <span style="font-size:9px;color:#5577aa">+wide→98×</span></span>
     <span class="pref">1 ball <strong>15×</strong></span>
     <span class="pref">2 balls <strong>20×</strong></span>
     <span class="pref">3 balls <strong>30×</strong></span>
@@ -915,6 +915,11 @@ function drawCountup() {
       ctx.shadowColor='#ff6600';ctx.shadowBlur=12;
       ctx.fillText('🔥 HOT WIN',CW/2,CH/2+56);
     }
+    if (countup.isWide && countup.ballsInSlot===0){
+      ctx.font='bold 13px "Orbitron",sans-serif';ctx.fillStyle='#66ccff';
+      ctx.shadowColor='#44aaff';ctx.shadowBlur=10;
+      ctx.fillText('◀▶ WIDE BONUS',CW/2,CH/2+(countup.isHot?76:56));
+    }
   }
   ctx.restore();
 }
@@ -1186,11 +1191,11 @@ function showPayout(){
   const {mult,win}=calcPayout(ballsInWin,isHot,wide,lightMult);
 
   roundNumber++;
-  addHistory({round:roundNumber,landed:winningNum,selected:winningNum,hit:true,win,mult,hot:isHot,wide,lightMult});
+  addHistory({round:roundNumber,landed:winningNum,selected:winningNum,hit:true,win,mult,hot:isHot,wide,lightMult,ballsInSlot:ballsInWin});
   flashAlpha=0.6;winGlow=1;
   if (stake>=10){shakeDecay=0.8;}
   Sound.win();
-  countup={current:0,target:mult,win,active:true,isHot};
+  countup={current:0,target:mult,win,active:true,isHot,isWide:wide,ballsInSlot:ballsInWin};
   setState(S.PAYOUT);
 
   const winSlotX=(winSlot+.5)*SLOT_W;
@@ -1227,6 +1232,7 @@ function renderHistory(){
     if(e.hot) tags.push('🔥');
     if(e.wide) tags.push('◀▶');
     if(e.lightMult>1) tags.push(`⚡${e.lightMult}×`);
+    if(e.wide && e.ballsInSlot===0) tags.push('◀▶ wide bonus');
     row.innerHTML=`
       <span class="h-round">#${e.round}</span>
       <span class="h-ball ${ballCls}">${e.landed}</span>
