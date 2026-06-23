@@ -127,6 +127,44 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   font-size:8px;font-weight:900;font-family:'Orbitron',sans-serif;
   color:#aaddff;text-shadow:0 0 4px #88bbff;line-height:1;pointer-events:none}
 
+/* ── Autoplay ───────────────────────────────────────────────── */
+#autoplay-area{display:flex;align-items:center;gap:6px;font-size:12px;color:#556677;margin-left:6px}
+#autoplay-btns{display:flex;gap:3px}
+.ap-btn{padding:4px 8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:4px;color:#778899;font-size:11px;font-weight:600;font-family:'Exo 2',sans-serif;cursor:pointer;
+  transition:border-color .12s,color .12s,background .12s}
+.ap-btn:hover{border-color:#f0c040;color:#f0c040}
+.ap-btn.active{background:rgba(240,192,64,.14);border-color:#f0c040;color:#f0c040}
+#ap-start{padding:5px 11px;background:rgba(80,200,100,.08);border:1px solid rgba(80,200,100,.28);
+  border-radius:4px;color:#66cc88;font-size:11px;font-weight:700;font-family:'Exo 2',sans-serif;
+  cursor:pointer;white-space:nowrap;transition:border-color .12s,color .12s,background .12s}
+#ap-start:hover:not(:disabled){border-color:#88ffaa;color:#aaffcc;background:rgba(80,200,100,.16)}
+#ap-start.stopping{border-color:rgba(255,80,80,.4);color:#ff7777;background:rgba(255,50,50,.08)}
+#ap-start:disabled{opacity:.28;cursor:not-allowed}
+
+/* ── History ───────────────────────────────────────────────── */
+#history-strip{padding:8px 14px 10px;
+  background:rgba(0,0,0,.25);border-top:1px solid rgba(255,255,255,.04)}
+#history-label{font-size:10px;font-family:'Orbitron',sans-serif;letter-spacing:2px;
+  color:#2a3a4a;margin-bottom:6px}
+#history-rows{display:flex;flex-direction:column;gap:3px}
+.h-row{display:flex;align-items:center;gap:8px;font-size:11px;font-family:'Exo 2',sans-serif;
+  padding:3px 6px;border-radius:3px;background:rgba(255,255,255,.025);
+  animation:h-slide-in .25s ease-out}
+@keyframes h-slide-in{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+.h-round{color:#2a3d50;font-size:10px;min-width:22px}
+.h-ball{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:900;flex-shrink:0}
+.h-ball.red{background:#8a1a1a;color:#ffaaaa}
+.h-ball.black{background:#222230;color:#aabbcc}
+.h-ball.green{background:#1e7835;color:#aaffcc}
+.h-landed{color:#667788;font-size:11px}
+.h-result{margin-left:auto;font-weight:700;font-size:11px}
+.h-result.win{color:#f0c040}
+.h-result.miss{color:#555566}
+.h-tags{font-size:9px;color:#446688;display:flex;gap:3px}
+.h-tags span{padding:1px 4px;border-radius:2px;background:rgba(255,255,255,.05)}
+
 @media(max-width:820px){body{padding:0}#app{width:100%}
   #gameCanvas{width:100%;height:auto}#bet-grid{grid-template-columns:repeat(12,1fr)}}
 </style>
@@ -147,6 +185,16 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <div id="bet-info">Bet: <span id="bet-total">£0.00</span></div>
     <button id="clear-btn" disabled>Clear</button>
     <button id="drop-btn" disabled>DROP BALL</button>
+    <div id="autoplay-area">
+      <span>Auto:</span>
+      <div id="autoplay-btns">
+        <button class="ap-btn" data-rounds="5">5</button>
+        <button class="ap-btn" data-rounds="10">10</button>
+        <button class="ap-btn" data-rounds="25">25</button>
+        <button class="ap-btn" data-rounds="50">50</button>
+      </div>
+      <button id="ap-start" disabled title="Repeats your current numbers and stake for each round">▶ Start</button>
+    </div>
     <div id="heat-wrap">
       <span id="heat-label">HEAT</span>
       <div id="heat-track"><div id="heat-fill"></div></div>
@@ -163,6 +211,10 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <span class="pref hot-ref" id="hot-ref" style="display:none">🔥 HOT <strong>1.5×</strong></span>
     <span class="pref wide-ref">◀▶ WIDE <strong>1.5×</strong></span>
     <span class="pref bolt-ref">⚡ BOLT <strong>2–5×</strong></span>
+  </div>
+  <div id="history-strip">
+    <div id="history-label">ROUND HISTORY</div>
+    <div id="history-rows"></div>
   </div>
 </div>
 
@@ -840,6 +892,7 @@ function refreshBetInfo() {
   const can=canAfford();
   document.getElementById('drop-btn').disabled=!can||state>S.BETTING;
   document.getElementById('clear-btn').disabled=n===0||state>S.BETTING;
+  document.getElementById('ap-start').disabled=n===0||!can;
 }
 function setInteractive(on){
   document.querySelectorAll('.bet-num').forEach(b=>{
@@ -1002,6 +1055,8 @@ function checkStage1(){
       setState(S.PAYOUT);
       setTimeout(startCascade,400);
     } else {
+      roundNumber++;
+      addHistory({round:roundNumber,landed,selected:null,hit:false,win:0,mult:0,hot:false,wide:false,lightMult:1});
       consecutiveMisses++;updateHeatMeter();
       showMiss=true;setState(S.PAYOUT);
       setTimeout(()=>{ showMiss=false; fullReset(); },3000);
@@ -1024,6 +1079,8 @@ function showPayout(){
   const lightMult=lightningNums.get(winningNum)||1;
   const {mult,win}=calcPayout(ballsInWin,isHot,wide,lightMult);
 
+  roundNumber++;
+  addHistory({round:roundNumber,landed:winningNum,selected:winningNum,hit:true,win,mult,hot:isHot,wide,lightMult});
   flashAlpha=0.6;winGlow=1;
   if (stake>=10){shakeDecay=0.8;}
   Sound.win();
@@ -1043,6 +1100,88 @@ function showPayout(){
   setTimeout(fullReset, 3000);
 }
 
+// ─── BET HISTORY ─────────────────────────────────────────────────────────────
+const historyLog=[]; // max 10 entries
+
+function addHistory(entry){
+  historyLog.unshift(entry);
+  if(historyLog.length>10) historyLog.pop();
+  renderHistory();
+}
+
+function renderHistory(){
+  const container=document.getElementById('history-rows');
+  container.innerHTML='';
+  historyLog.forEach((e,i)=>{
+    const row=document.createElement('div');
+    row.className='h-row';
+    const isRed=new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]).has(e.landed);
+    const ballCls=e.landed===0?'green':isRed?'red':'black';
+    const tags=[];
+    if(e.hot) tags.push('🔥');
+    if(e.wide) tags.push('◀▶');
+    if(e.lightMult>1) tags.push(`⚡${e.lightMult}×`);
+    row.innerHTML=`
+      <span class="h-round">#${e.round}</span>
+      <span class="h-ball ${ballCls}">${e.landed}</span>
+      <span class="h-landed">${e.hit?`hit ${e.selected}`:'miss'}</span>
+      ${tags.length?`<span class="h-tags">${tags.map(t=>`<span>${t}</span>`).join('')}</span>`:''}
+      <span class="h-result ${e.hit?'win':'miss'}">${e.hit?`£${e.win.toFixed(2)} (${e.mult}×)`:'—'}</span>`;
+    container.appendChild(row);
+  });
+}
+
+let roundNumber=0;
+
+// ─── AUTOPLAY ─────────────────────────────────────────────────────────────────
+let autoplay={active:false,remaining:0,rounds:10,savedNums:new Set(),savedStake:1};
+
+function apSelectRounds(n){
+  autoplay.rounds=n;
+  document.querySelectorAll('.ap-btn').forEach(b=>b.classList.toggle('active',+b.dataset.rounds===n));
+  document.getElementById('ap-start').disabled=false;
+}
+
+function apStart(){
+  if(autoplay.active){ apStop(); return; }
+  if(selNums.size===0){ showStatus('Select numbers first!'); return; }
+  autoplay.active=true;
+  autoplay.remaining=autoplay.rounds;
+  autoplay.savedNums=new Set(selNums);
+  autoplay.savedStake=stake;
+  const btn=document.getElementById('ap-start');
+  btn.textContent='■ Stop';btn.classList.add('stopping');
+  // Tell the player exactly what will repeat
+  const numList=Array.from(autoplay.savedNums).join(', ');
+  showStatus(`Autoplay: repeating £${autoplay.savedStake} on ${numList} × ${autoplay.rounds} rounds`);
+  setTimeout(apDropNext,800);
+}
+
+function apStop(){
+  autoplay.active=false;autoplay.remaining=0;
+  const btn=document.getElementById('ap-start');
+  btn.textContent='▶ Start';btn.classList.remove('stopping');
+  showStatus('Autoplay stopped.');
+}
+
+function apDropNext(){
+  if(!autoplay.active||autoplay.remaining<=0){ apStop(); return; }
+  // Restore selections for this round
+  selNums.clear();
+  document.querySelectorAll('.bet-num.selected').forEach(b=>b.classList.remove('selected'));
+  autoplay.savedNums.forEach(n=>{
+    selNums.add(n);
+    document.querySelector(`[data-num="${n}"]`)?.classList.add('selected');
+  });
+  stake=autoplay.savedStake;
+  if(state===S.IDLE||state===S.BETTING){
+    setState(S.BETTING);
+    autoplay.remaining--;
+    showStatus(`Autoplay: ${autoplay.remaining+1} round${autoplay.remaining?'s':''} left`);
+    onDrop();
+  }
+}
+
 function fullReset(){
   // Clear all balls and visual state
   winGlow=0;balls=[];slotCounts=new Array(37).fill(0);winningNum=null;shakeDecay=0;showMiss=false;
@@ -1056,7 +1195,13 @@ function fullReset(){
   hotNums.clear();hotExpiry=0;
   document.getElementById('hot-ref').style.display='none';
   setState(S.IDLE);
-  showStatus('Select numbers and drop!');
+  if(autoplay.active&&autoplay.remaining>0){
+    showStatus(`Autoplay: ${autoplay.remaining} round${autoplay.remaining!==1?'s':''} left`);
+    setTimeout(apDropNext,600);
+  } else {
+    if(autoplay.active) apStop();
+    showStatus('Select numbers and drop!');
+  }
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────────────────────
@@ -1087,6 +1232,13 @@ function gameLoop(){
 buildBetTable();buildStakeButtons();
 document.getElementById('drop-btn').addEventListener('click',onDrop);
 document.getElementById('clear-btn').addEventListener('click',onClear);
+// Autoplay controls
+apSelectRounds(10); // default selection
+document.getElementById('autoplay-btns').addEventListener('click',e=>{
+  const btn=e.target.closest('.ap-btn');
+  if(btn)apSelectRounds(+btn.dataset.rounds);
+});
+document.getElementById('ap-start').addEventListener('click',apStart);
 setState(S.IDLE);showStatus('Select numbers and drop!');
 scheduleNextHot();
 requestAnimationFrame(gameLoop);
