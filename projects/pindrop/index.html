@@ -57,6 +57,8 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   0%,100%{box-shadow:0 0 10px #ff4400,0 -3px 12px #ff8800,inset 0 0 8px rgba(255,100,0,.25)}
   50%{box-shadow:0 0 20px #ff6600,0 -8px 22px #ffaa00,inset 0 0 14px rgba(255,160,0,.35)}}
 .bet-num:disabled{opacity:.35;cursor:not-allowed;transform:none;animation:none}
+.bet-num.locked{pointer-events:none;cursor:default}
+.stake-btn.locked{pointer-events:none;opacity:.45;cursor:default}
 .bet-num.green{background:linear-gradient(180deg,#1e7835,#145225);width:38px;flex-shrink:0;font-size:14px}
 .bet-num.red{background:linear-gradient(180deg,#8a1a1a,#5a0e0e)}
 .bet-num.black{background:linear-gradient(180deg,#1e1e30,#111118)}
@@ -202,9 +204,10 @@ function resolvePin(ball, pin) {
   const dot=ball.vx*nx+ball.vy*ny;
   if (dot<0) {
     pin.hitTime=performance.now();
-    // Per-pin restitution for organic deflection variety
     ball.vx-=(1+pin.rest)*dot*nx+(Math.random()-0.5)*0.2;
     ball.vy-=(1+pin.rest)*dot*ny;
+    const spd=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
+    Sound.tick(spd);
   }
 }
 
@@ -486,7 +489,26 @@ const Sound=(()=>{
       osc.connect(g);g.connect(c.destination);osc.start(t+i*0.11);osc.stop(t+i*0.11+0.55);
     });
   }
-  return{zap,thunder,whoosh,win};
+  let lastTick=0;
+  function tick(speed){
+    const now=Date.now();
+    if(now-lastTick<55)return; // max ~18 ticks/s to avoid mud
+    lastTick=now;
+    const c=init(),t=c.currentTime;
+    // Short triangle ping — pitch scales with ball speed
+    const freq=420+Math.min(speed,12)*28;
+    const osc=c.createOscillator();osc.type='triangle';osc.frequency.value=freq;
+    const g=c.createGain();g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
+    osc.connect(g);g.connect(c.destination);osc.start(t);osc.stop(t+0.07);
+    // Subtle body knock
+    const buf=mkNoise(c,0.05),d2=buf.getChannelData(0);
+    for(let i=0;i<d2.length;i++)d2[i]*=Math.exp(-i/(d2.length*0.15));
+    const src=c.createBufferSource();src.buffer=buf;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;
+    const g2=c.createGain();g2.gain.setValueAtTime(0.1,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
+    src.connect(lp);lp.connect(g2);g2.connect(c.destination);src.start(t);src.stop(t+0.05);
+  }
+  return{zap,thunder,whoosh,win,tick};
 })();
 
 // ─── RENDERER ────────────────────────────────────────────────────────────────
@@ -545,6 +567,7 @@ function drawSlots(slotCounts, winningNum, winGlow) {
     const sx=i*SLOT_W, num=SLOT_NUMBERS[i];
     const isW=num===winningNum, isSel=selNums.has(num)&&winningNum===null;
     const isHot=hotNums.has(num)&&winningNum===null;
+    const isLit=lightningNums.has(num)&&winningNum===null;
     const cnt=slotCounts?(slotCounts[i]||0):0;
     const isRed=RED_N.has(num), isGreen=num===0;
 
@@ -561,15 +584,28 @@ function drawSlots(slotCounts, winningNum, winGlow) {
       ctx.fillStyle=`rgba(255,100,0,${pulse.toFixed(3)})`;
       ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
     }
+    // Lightning multiplier slot — blue pulse
+    if (isLit) {
+      const pulse=0.18+0.10*Math.abs(Math.sin(Date.now()*0.007));
+      ctx.fillStyle=`rgba(80,160,255,${pulse.toFixed(3)})`;
+      ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
+    }
 
     ctx.font='bold 8px "Exo 2",monospace';ctx.textAlign='center';
     ctx.fillStyle = isW    ? '#f0c040'
+                  : isLit  ? '#88ddff'
                   : isHot  ? '#ff9900'
                   : isSel  ? '#c8a030'
                   : isRed  ? '#cc4444'
                   : isGreen? '#44cc66'
                   : '#4466aa';
     ctx.fillText(num,sx+SLOT_W/2,SLOT_TOP+13);
+    // Show multiplier badge in lit slot
+    if (isLit){
+      ctx.font='bold 7px "Orbitron",monospace';
+      ctx.fillStyle='rgba(140,220,255,0.9)';
+      ctx.fillText(`${lightningNums.get(num)}×`,sx+SLOT_W/2,SLOT_TOP+22);
+    }
 
     if (cnt>0){
       ctx.font=`bold ${cnt>9?9:11}px "Exo 2",monospace`;
@@ -657,7 +693,7 @@ function drawLightningOverlay(now) {
   ctx.textAlign='center';ctx.font='bold 54px "Orbitron",sans-serif';
   ctx.shadowColor='#88ccff';ctx.shadowBlur=50*a;
   ctx.fillStyle=`rgba(190,225,255,${a.toFixed(2)})`;
-  ctx.fillText('⚡  LIGHTNING  ⚡',CW/2,CH/2+18);
+  ctx.fillText('⚡  MULTIPLIER  ⚡',CW/2,CH/2+18);
   ctx.restore();
 }
 
@@ -806,7 +842,14 @@ function refreshBetInfo() {
   document.getElementById('clear-btn').disabled=n===0||state>S.BETTING;
 }
 function setInteractive(on){
-  document.querySelectorAll('.bet-num,.stake-btn').forEach(b=>{b.disabled=!on;});
+  document.querySelectorAll('.bet-num').forEach(b=>{
+    b.disabled=false; // never grey out the number grid
+    b.classList.toggle('locked',!on);
+  });
+  document.querySelectorAll('.stake-btn').forEach(b=>{
+    b.disabled=!on;
+    b.classList.toggle('locked',!on);
+  });
   if(!on){document.getElementById('drop-btn').disabled=true;document.getElementById('clear-btn').disabled=true;}
 }
 function updateBalance(){
@@ -864,7 +907,7 @@ function onDrop(){
   }
 
   setState(S.DROPPING);
-  showStatus('⚡ Lightning multipliers!');
+  showStatus('⚡ Multipliers activated!');
 
   // Show overlay then fire bolts, then launch ball
   lightningOverlay={alpha:1,start:performance.now()};
