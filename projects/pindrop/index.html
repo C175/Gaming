@@ -40,13 +40,22 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .bet-num{height:38px;border:1px solid rgba(255,255,255,0.12);border-radius:3px;cursor:pointer;
   font-size:11px;font-weight:700;color:#fff;font-family:'Exo 2',sans-serif;
   transition:transform .1s,border-color .12s,box-shadow .12s,background .12s;line-height:1;
-  position:relative}
+  position:relative;overflow:hidden}
 .bet-num:hover:not(:disabled){transform:scaleY(1.13);border-color:#f0c040;z-index:1}
 .bet-num.selected{border-color:#f0c040!important;background:#7a5500!important;
   box-shadow:0 0 14px rgba(240,192,64,.65),inset 0 0 12px rgba(240,192,64,.2);
   animation:pulse-sel 1.2s ease-in-out infinite}
 @keyframes pulse-sel{0%,100%{box-shadow:0 0 10px rgba(240,192,64,.5),inset 0 0 8px rgba(240,192,64,.15)}
   50%{box-shadow:0 0 20px rgba(240,192,64,.8),inset 0 0 14px rgba(240,192,64,.3)}}
+/* Hot number flame effect */
+.bet-num.hot{border-color:#ff6600!important;animation:flame-btn 0.7s ease-in-out infinite!important}
+.bet-num.hot.selected{animation:flame-sel 0.7s ease-in-out infinite!important}
+@keyframes flame-btn{
+  0%,100%{box-shadow:0 0 6px #ff4400,0 -3px 10px #ff8800;border-color:#ff6600}
+  50%{box-shadow:0 0 14px #ff6600,0 -7px 18px #ffaa00;border-color:#ffaa00}}
+@keyframes flame-sel{
+  0%,100%{box-shadow:0 0 10px #ff4400,0 -3px 12px #ff8800,inset 0 0 8px rgba(255,100,0,.25)}
+  50%{box-shadow:0 0 20px #ff6600,0 -8px 22px #ffaa00,inset 0 0 14px rgba(255,160,0,.35)}}
 .bet-num:disabled{opacity:.35;cursor:not-allowed;transform:none;animation:none}
 .bet-num.green{background:linear-gradient(180deg,#1e7835,#145225);width:38px;flex-shrink:0;font-size:14px}
 .bet-num.red{background:linear-gradient(180deg,#8a1a1a,#5a0e0e)}
@@ -54,7 +63,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 #bet-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(3,38px);gap:3px;flex:1}
 
 /* ── Controls ───────────────────────────────────────────── */
-#controls{display:flex;align-items:center;gap:12px;padding:10px 14px;
+#controls{display:flex;align-items:center;gap:10px;padding:10px 14px;
   background:linear-gradient(180deg,rgba(8,8,20,0.95),rgba(5,5,14,0.98));
   border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
 #stake-area{display:flex;align-items:center;gap:8px;font-size:12px;color:#556677}
@@ -66,8 +75,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 .stake-btn.active{background:rgba(240,192,64,.14);border-color:#f0c040;color:#f0c040}
 .stake-btn:disabled{opacity:.35;cursor:not-allowed}
 #drop-btn{padding:9px 22px;background:linear-gradient(135deg,#b8920e,#f0c040,#b8920e);
-  background-size:200% 100%;
-  border:none;border-radius:5px;color:#0a0a18;font-size:14px;font-weight:900;
+  background-size:200% 100%;border:none;border-radius:5px;color:#0a0a18;font-size:14px;font-weight:900;
   font-family:'Orbitron',sans-serif;letter-spacing:2px;cursor:pointer;
   transition:transform .12s,box-shadow .12s,background-position .4s;text-transform:uppercase;white-space:nowrap}
 #drop-btn:hover:not(:disabled){background-position:100% 0;transform:translateY(-2px);
@@ -81,13 +89,23 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   transition:border-color .12s,color .12s,background .12s}
 #clear-btn:hover:not(:disabled){border-color:#ff7777;color:#ff9999;background:rgba(255,50,50,.12)}
 #clear-btn:disabled{opacity:.28;cursor:not-allowed}
-#status-msg{margin-left:auto;font-size:12px;color:#556677;font-style:italic;max-width:240px;text-align:right}
+/* Heat meter */
+#heat-wrap{display:flex;align-items:center;gap:6px;margin-left:4px}
+#heat-label{font-size:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:#554422;
+  white-space:nowrap;transition:color .3s}
+#heat-label.hot{color:#ff8800;text-shadow:0 0 8px #ff6600}
+#heat-track{width:64px;height:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:4px;overflow:hidden}
+#heat-fill{height:100%;width:0%;border-radius:4px;transition:width .4s,background .4s;
+  background:linear-gradient(90deg,#442200,#884400)}
+#status-msg{margin-left:auto;font-size:12px;color:#556677;font-style:italic;max-width:200px;text-align:right}
 
 /* ── Payout ref ─────────────────────────────────────────── */
 #payout-ref{display:flex;justify-content:center;gap:14px;padding:8px 16px;
   background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.04);flex-wrap:wrap}
 .pref{font-size:11px;color:#3d5066;font-family:'Exo 2',sans-serif}
 .pref strong{color:#f0c040;margin-left:3px}
+.pref.hot-ref strong{color:#ff8800}
 
 @media(max-width:820px){body{padding:0}#app{width:100%}
   #gameCanvas{width:100%;height:auto}#bet-grid{grid-template-columns:repeat(12,1fr)}}
@@ -109,15 +127,20 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
     <div id="bet-info">Bet: <span id="bet-total">£0.00</span></div>
     <button id="clear-btn" disabled>Clear</button>
     <button id="drop-btn" disabled>DROP BALL</button>
+    <div id="heat-wrap">
+      <span id="heat-label">HEAT</span>
+      <div id="heat-track"><div id="heat-fill"></div></div>
+    </div>
     <div id="status-msg">Select numbers and drop!</div>
   </div>
   <div id="payout-ref">
-    <span class="pref">0 balls <strong>70×</strong></span>
+    <span class="pref">0 balls <strong>65×</strong></span>
     <span class="pref">1 ball <strong>15×</strong></span>
     <span class="pref">2 balls <strong>20×</strong></span>
     <span class="pref">3 balls <strong>30×</strong></span>
     <span class="pref">4 balls <strong>50×</strong></span>
     <span class="pref">5+ balls <strong>100×</strong></span>
+    <span class="pref hot-ref" id="hot-ref" style="display:none">🔥 HOT <strong>1.5×</strong></span>
   </div>
 </div>
 
@@ -127,22 +150,27 @@ const CONFIG = {
   branding:  { primaryColour: '#f0c040', backgroundColor: '#0b0b1c' },
   gameplay:  { stakeOptions: [0.20,0.50,1,2,5,10], startingBalance: 100,
                stage2BallCount: 30, stage2BallInterval: 200 },
-  rtp:       { payoutTable: { 0:70,1:15,2:20,3:30,4:50,5:100 } },
+  rtp:       { payoutTable: { 0:65,1:15,2:20,3:30,4:50,5:100 } },
+  // Hot numbers: declared promotional feature — activates 1-2 numbers for 12s
+  // every 45-75s. Multiplies payout by 1.5× if bet number is hot when hit.
+  // Increases RTP during activation window by ~50% of the base rate.
+  hotNumbers: { enabled: true, minInterval: 45000, maxInterval: 75000, duration: 12000, multiplier: 1.5 },
+  heat:       { maxMisses: 10, nudgeStart: 6 }, // pseudo-random nudge after N misses
 };
 
 // ─── PHYSICS ─────────────────────────────────────────────────────────────────
 class PhysicsBall {
   constructor(x, y, r) {
-    this.x = x; this.y = y; this.r = r;
-    this.vx = (Math.random()-0.5)*0.5; this.vy = 0;
-    this.active = true; this.settled = false;
-    this.removed = false; this.slotIndex = -1;
-    this.isCascade = false; this.processed = false;
-    this.trail = [];
+    this.x=x; this.y=y; this.r=r;
+    this.vx=(Math.random()-0.5)*0.5; this.vy=0;
+    this.active=true; this.settled=false;
+    this.removed=false; this.slotIndex=-1;
+    this.isCascade=false; this.processed=false;
+    this.trail=[];
   }
 }
 
-const GRAVITY=0.238, RESTITUTION=0.46, AIR_FRIC=0.9985, SUBSTEPS=3;
+const GRAVITY=0.238, AIR_FRIC=0.9985, SUBSTEPS=3;
 
 function resolvePin(ball, pin) {
   const dx=ball.x-pin.x, dy=ball.y-pin.y;
@@ -153,9 +181,10 @@ function resolvePin(ball, pin) {
   ball.x+=nx*(minD-d); ball.y+=ny*(minD-d);
   const dot=ball.vx*nx+ball.vy*ny;
   if (dot<0) {
-    pin.hitTime=performance.now(); // record hit for glow
-    ball.vx-=(1+RESTITUTION)*dot*nx+(Math.random()-0.5)*0.2;
-    ball.vy-=(1+RESTITUTION)*dot*ny;
+    pin.hitTime=performance.now();
+    // Per-pin restitution for organic deflection variety
+    ball.vx-=(1+pin.rest)*dot*nx+(Math.random()-0.5)*0.2;
+    ball.vy-=(1+pin.rest)*dot*ny;
   }
 }
 
@@ -168,7 +197,7 @@ function resolveRect(ball, rect) {
   const nx=dx/d, ny=dy/d;
   ball.x+=nx*(ball.r-d); ball.y+=ny*(ball.r-d);
   const dot=ball.vx*nx+ball.vy*ny;
-  if (dot<0) { ball.vx-=(1+RESTITUTION)*dot*nx; ball.vy-=(1+RESTITUTION)*dot*ny; }
+  if (dot<0) { ball.vx-=(1.46)*dot*nx; ball.vy-=(1.46)*dot*ny; }
 }
 
 function stepPhysics(balls, pins, rects) {
@@ -182,10 +211,9 @@ function stepPhysics(balls, pins, rects) {
       for (const rect of rects) resolveRect(ball,rect);
     }
   }
-  // Update trails (once per frame, not per substep)
   for (const ball of balls) {
     if (ball.removed) continue;
-    ball.trail.push({x:ball.x, y:ball.y});
+    ball.trail.push({x:ball.x,y:ball.y});
     if (ball.trail.length>10) ball.trail.shift();
   }
 }
@@ -200,7 +228,11 @@ for (let row=1;row<=10;row++) {
   const y=GRID_TOP+(row-1)*PIN_SPACING_Y;
   const startX=CW/2-(row-1)*PIN_SPACING_X/2;
   for (let col=0;col<row;col++)
-    PINS.push({x:startX+col*PIN_SPACING_X, y, r:PIN_R, hitTime:0});
+    PINS.push({
+      x:startX+col*PIN_SPACING_X, y, r:PIN_R,
+      hitTime:0,
+      rest: 0.38+Math.random()*0.16, // per-pin restitution 0.38–0.54
+    });
 }
 
 const RECTS=[
@@ -220,37 +252,96 @@ let balance=CONFIG.gameplay.startingBalance, stake=1, selNums=new Set(), lastWin
 function totalBet(){return +(stake*selNums.size).toFixed(2);}
 function canAfford(){return selNums.size>0&&balance>=totalBet();}
 function placeBets(){if(!canAfford())return false;balance=+(balance-totalBet()).toFixed(2);return true;}
-function calcPayout(ballCount){
-  const mult=CONFIG.rtp.payoutTable[Math.min(ballCount,5)];
+function calcPayout(ballCount, isHot) {
+  const base=CONFIG.rtp.payoutTable[Math.min(ballCount,5)];
+  const mult=isHot ? Math.round(base*CONFIG.hotNumbers.multiplier) : base;
   const win=+(stake*mult).toFixed(2);
   lastWin=win; balance=+(balance+win).toFixed(2);
-  return {mult,win};
+  return {mult,win,isHot};
+}
+
+// ─── HOT NUMBERS ─────────────────────────────────────────────────────────────
+let hotNums=new Set();
+let hotExpiry=0;
+
+function activateHotNumbers() {
+  // Clear previous
+  hotNums.forEach(n=>document.querySelector(`[data-num="${n}"]`)?.classList.remove('hot'));
+  hotNums.clear();
+  document.getElementById('hot-ref').style.display='none';
+
+  if (!CONFIG.hotNumbers.enabled) { scheduleNextHot(); return; }
+
+  // Pick 1–2 numbers that are NOT currently in play
+  const pool=Array.from({length:37},(_,i)=>i).filter(n=>!selNums.has(n));
+  const count=Math.random()<0.3?2:1;
+  for (let i=0;i<count&&pool.length;i++) {
+    const idx=Math.floor(Math.random()*pool.length);
+    hotNums.add(pool.splice(idx,1)[0]);
+  }
+  hotExpiry=Date.now()+CONFIG.hotNumbers.duration;
+
+  hotNums.forEach(n=>{
+    const btn=document.querySelector(`[data-num="${n}"]`);
+    if (btn) btn.classList.add('hot');
+  });
+  document.getElementById('hot-ref').style.display='';
+
+  setTimeout(()=>{
+    hotNums.forEach(n=>document.querySelector(`[data-num="${n}"]`)?.classList.remove('hot'));
+    hotNums.clear(); hotExpiry=0;
+    document.getElementById('hot-ref').style.display='none';
+    scheduleNextHot();
+  }, CONFIG.hotNumbers.duration);
+}
+
+function scheduleNextHot() {
+  const {minInterval,maxInterval}=CONFIG.hotNumbers;
+  setTimeout(activateHotNumbers, minInterval+Math.random()*(maxInterval-minInterval));
+}
+
+// ─── HEAT METER ──────────────────────────────────────────────────────────────
+let consecutiveMisses=0;
+const MAX_HEAT=CONFIG.heat.maxMisses;
+
+function updateHeatMeter() {
+  const pct=Math.min(1,consecutiveMisses/MAX_HEAT);
+  const fill=document.getElementById('heat-fill');
+  const label=document.getElementById('heat-label');
+  fill.style.width=(pct*100)+'%';
+  if (pct>=0.9) {
+    fill.style.background='linear-gradient(90deg,#882200,#ff4400,#ff8800)';
+    label.classList.add('hot');
+  } else if (pct>=0.5) {
+    fill.style.background='linear-gradient(90deg,#663300,#cc5500,#ff8800)';
+    label.classList.remove('hot');
+  } else {
+    fill.style.background='linear-gradient(90deg,#442200,#884400)';
+    label.classList.remove('hot');
+  }
 }
 
 // ─── PARTICLES ───────────────────────────────────────────────────────────────
 const particles=[];
-const CONFETTI_COLS=['#f0c040','#ff6644','#44ffaa','#ff44aa','#44aaff','#ffffff','#ffaa44'];
+const CONFETTI_COLS =['#f0c040','#ff6644','#44ffaa','#ff44aa','#44aaff','#ffffff','#ffaa44'];
+const HOT_WIN_COLS  =['#ff4400','#ff8800','#ffcc00','#ffffff','#ff6600','#ffaa00'];
 
-function spawnParticles(x, y, count) {
+function spawnParticles(x, y, count, cols) {
+  const palette=cols||CONFETTI_COLS;
   for (let i=0;i<count;i++) {
     const angle=Math.random()*Math.PI*2;
     const speed=3+Math.random()*9;
     particles.push({
-      x, y,
-      vx:Math.cos(angle)*speed, vy:Math.sin(angle)*speed-4,
-      color:CONFETTI_COLS[Math.floor(Math.random()*CONFETTI_COLS.length)],
-      life:1, decay:0.012+Math.random()*0.018,
-      r:2+Math.random()*4, rot:Math.random()*Math.PI*2,
-      rotV:(Math.random()-0.5)*0.3,
+      x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-4,
+      color:palette[Math.floor(Math.random()*palette.length)],
+      life:1,decay:0.012+Math.random()*0.018,
+      r:2+Math.random()*4,rot:Math.random()*Math.PI*2,rotV:(Math.random()-0.5)*0.3,
     });
   }
 }
 
 function updateParticles() {
-  for (const p of particles) {
-    p.x+=p.vx; p.y+=p.vy; p.vy+=0.25; p.vx*=0.97;
-    p.life-=p.decay; p.rot+=p.rotV;
-  }
+  for (const p of particles){p.x+=p.vx;p.y+=p.vy;p.vy+=0.25;p.vx*=0.97;p.life-=p.decay;p.rot+=p.rotV;}
   for (let i=particles.length-1;i>=0;i--) if(particles[i].life<=0) particles.splice(i,1);
 }
 
@@ -258,52 +349,46 @@ function updateParticles() {
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
 
-// Felt texture: pre-render to offscreen canvas
 const feltCanvas=document.createElement('canvas');
 feltCanvas.width=20; feltCanvas.height=20;
 const fc=feltCanvas.getContext('2d');
-fc.fillStyle='rgba(255,255,255,0)'; fc.fillRect(0,0,20,20);
-fc.strokeStyle='rgba(255,255,255,0.022)'; fc.lineWidth=0.5;
-fc.beginPath(); fc.moveTo(0,0); fc.lineTo(20,20); fc.stroke();
-fc.beginPath(); fc.moveTo(20,0); fc.lineTo(0,20); fc.stroke();
+fc.fillStyle='rgba(255,255,255,0)';fc.fillRect(0,0,20,20);
+fc.strokeStyle='rgba(255,255,255,0.022)';fc.lineWidth=0.5;
+fc.beginPath();fc.moveTo(0,0);fc.lineTo(20,20);fc.stroke();
+fc.beginPath();fc.moveTo(20,0);fc.lineTo(0,20);fc.stroke();
 const feltPattern=ctx.createPattern(feltCanvas,'repeat');
 
-let flashAlpha=0;
-let countup={current:0,target:0,win:0,active:false};
-let stage2Anim={active:false,start:0,duration:1300};
+let flashAlpha=0, shakeX=0, shakeY=0, shakeDecay=0;
+let countup={current:0,target:0,win:0,active:false,isHot:false};
+let stage2Anim={active:false,start:0,duration:1300,tier:'normal'};
 
 function drawBackground() {
-  // Base
   ctx.fillStyle=CONFIG.branding.backgroundColor;
   ctx.fillRect(0,0,CW,CH);
-  // Felt texture
   ctx.fillStyle=feltPattern;
   ctx.fillRect(0,0,CW,CH);
-  // Soft centre radial glow
   const t=Date.now()*0.0006;
-  const gx=CW/2+Math.sin(t)*60, gy=CH/2+Math.cos(t*0.7)*40;
-  const grad=ctx.createRadialGradient(gx,gy,0,CW/2,CH/2,CW*0.7);
+  const grad=ctx.createRadialGradient(
+    CW/2+Math.sin(t)*60,CH/2+Math.cos(t*.7)*40,0,CW/2,CH/2,CW*.7);
   grad.addColorStop(0,'rgba(15,30,70,0.5)');
-  grad.addColorStop(0.5,'rgba(10,14,35,0.25)');
+  grad.addColorStop(.5,'rgba(10,14,35,0.25)');
   grad.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grad; ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle=grad;ctx.fillRect(0,0,CW,CH);
 }
 
 function drawPins(now) {
   for (const {x,y,r,hitTime} of PINS) {
     const age=now-hitTime;
-    // Hit glow
     if (age<350) {
       const t=1-age/350;
-      ctx.beginPath(); ctx.arc(x,y,r*3.5,0,Math.PI*2);
-      ctx.fillStyle=`rgba(240,192,64,${(t*0.55).toFixed(2)})`; ctx.fill();
+      ctx.beginPath();ctx.arc(x,y,r*3.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(240,192,64,${(t*.55).toFixed(2)})`;ctx.fill();
     }
-    // Pin body
     const g=ctx.createRadialGradient(x-1.8,y-1.8,0,x,y,r+2);
-    g.addColorStop(0,age<350?`rgba(255,240,180,${(1-(age/350))*0.6+0.6})`:'#d8e8f0');
+    g.addColorStop(0,age<350?`rgba(255,240,180,${((1-age/350)*.6+.6).toFixed(2)})`:'#d8e8f0');
     g.addColorStop(1,age<350?'#7a6030':'#3a5060');
-    ctx.beginPath(); ctx.arc(x,y,r+1,0,Math.PI*2);
-    ctx.fillStyle=g; ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,r+1,0,Math.PI*2);
+    ctx.fillStyle=g;ctx.fill();
   }
 }
 
@@ -312,190 +397,192 @@ function drawSlots(slotCounts, winningNum, winGlow) {
   for (let i=0;i<SLOT_N;i++) {
     const sx=i*SLOT_W, num=SLOT_NUMBERS[i];
     const isW=num===winningNum, isSel=selNums.has(num)&&winningNum===null;
+    const isHot=hotNums.has(num)&&winningNum===null;
     const cnt=slotCounts?(slotCounts[i]||0):0;
     const isRed=RED_N.has(num), isGreen=num===0;
 
-    // Slot bg colour (roulette colours, subtle)
-    if (isW) ctx.fillStyle='rgba(240,192,64,0.10)';
+    if (isW)        ctx.fillStyle='rgba(240,192,64,0.10)';
     else if (isRed)  ctx.fillStyle='rgba(120,20,20,0.25)';
-    else if (isGreen) ctx.fillStyle='rgba(20,90,35,0.25)';
-    else ctx.fillStyle='rgba(14,14,28,0.6)';
+    else if (isGreen)ctx.fillStyle='rgba(20,90,35,0.25)';
+    else             ctx.fillStyle='rgba(14,14,28,0.6)';
     ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
 
-    // Selected tint
-    if (isSel) {
-      ctx.fillStyle='rgba(240,192,64,0.08)';
+    if (isSel){ctx.fillStyle='rgba(240,192,64,0.08)';ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);}
+    // Hot slot tint
+    if (isHot) {
+      const pulse=0.12+0.06*Math.abs(Math.sin(Date.now()*0.006));
+      ctx.fillStyle=`rgba(255,100,0,${pulse.toFixed(3)})`;
       ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
     }
 
-    // Number label
-    ctx.font='bold 8px "Exo 2",monospace'; ctx.textAlign='center';
-    ctx.fillStyle = isW   ? '#f0c040'
-                  : isSel ? '#c8a030'
-                  : isRed ? '#cc4444'
-                  : isGreen ? '#44cc66'
+    ctx.font='bold 8px "Exo 2",monospace';ctx.textAlign='center';
+    ctx.fillStyle = isW    ? '#f0c040'
+                  : isHot  ? '#ff9900'
+                  : isSel  ? '#c8a030'
+                  : isRed  ? '#cc4444'
+                  : isGreen? '#44cc66'
                   : '#4466aa';
     ctx.fillText(num,sx+SLOT_W/2,SLOT_TOP+13);
 
-    // Ball count
-    if (cnt>0) {
+    if (cnt>0){
       ctx.font=`bold ${cnt>9?9:11}px "Exo 2",monospace`;
       ctx.fillStyle=isW?'#f0c040':'#5577aa';
       ctx.fillText(cnt,sx+SLOT_W/2,CH-6);
     }
   }
-  // Win glow overlay
   if (winningNum!==null&&winGlow>0) {
     const idx=NUMBER_TO_SLOT[winningNum];
     if (idx!==undefined) {
       const sx=idx*SLOT_W;
       const g=ctx.createLinearGradient(sx,SLOT_TOP,sx,CH);
-      g.addColorStop(0,`rgba(240,192,64,${(winGlow*0.6).toFixed(2)})`);
-      g.addColorStop(1,`rgba(240,192,64,${(winGlow*0.04).toFixed(2)})`);
-      ctx.fillStyle=g; ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
+      g.addColorStop(0,`rgba(240,192,64,${(winGlow*.6).toFixed(2)})`);
+      g.addColorStop(1,`rgba(240,192,64,${(winGlow*.04).toFixed(2)})`);
+      ctx.fillStyle=g;ctx.fillRect(sx+1,SLOT_TOP+2,SLOT_W-2,slotH-3);
     }
   }
-  // Grid lines
   ctx.fillStyle='#1e2d3e';
   for (let i=0;i<=SLOT_N;i++) ctx.fillRect(i*SLOT_W,SLOT_TOP,1,slotH);
-  ctx.fillStyle='#2a4055'; ctx.fillRect(0,SLOT_TOP,CW,2);
+  ctx.fillStyle='#2a4055';ctx.fillRect(0,SLOT_TOP,CW,2);
 }
 
 function drawBalls(balls) {
   for (const ball of balls) {
     if (ball.removed) continue;
-    const {x,y,isCascade,trail}=ball, r=BALL_R;
-
-    // Trail
+    const {x,y,isCascade,trail}=ball,r=BALL_R;
     for (let t=0;t<trail.length;t++) {
-      const frac=(t+1)/trail.length;
-      const tr=trail[t];
-      ctx.beginPath(); ctx.arc(tr.x,tr.y,r*frac*0.65,0,Math.PI*2);
-      ctx.fillStyle=`rgba(${isCascade?'140,210,255':'220,235,255'},${(frac*0.25).toFixed(2)})`;
-      ctx.fill();
+      const frac=(t+1)/trail.length, tr=trail[t];
+      ctx.beginPath();ctx.arc(tr.x,tr.y,r*frac*.65,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${isCascade?'140,210,255':'220,235,255'},${(frac*.25).toFixed(2)})`;ctx.fill();
     }
-
-    // Glow halo
     const halo=ctx.createRadialGradient(x,y,0,x,y,r*3.5);
     halo.addColorStop(0,isCascade?'rgba(120,200,255,0.32)':'rgba(255,255,255,0.32)');
     halo.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath(); ctx.arc(x,y,r*3.5,0,Math.PI*2);
-    ctx.fillStyle=halo; ctx.fill();
-
-    // Ball surface
+    ctx.beginPath();ctx.arc(x,y,r*3.5,0,Math.PI*2);ctx.fillStyle=halo;ctx.fill();
     const surf=ctx.createRadialGradient(x-r*.38,y-r*.38,0,x,y,r);
     surf.addColorStop(0,'#ffffff');
-    surf.addColorStop(0.5,isCascade?'#90c8f0':'#ccdde8');
+    surf.addColorStop(.5,isCascade?'#90c8f0':'#ccdde8');
     surf.addColorStop(1,'#506878');
-    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fillStyle=surf; ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=surf;ctx.fill();
   }
 }
 
 function drawParticles() {
-  for (const p of particles) {
-    ctx.save();
-    ctx.globalAlpha=p.life;
-    ctx.translate(p.x,p.y); ctx.rotate(p.rot);
-    ctx.fillStyle=p.color;
-    ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);
-    ctx.restore();
+  for (const p of particles){
+    ctx.save();ctx.globalAlpha=p.life;ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    ctx.fillStyle=p.color;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r);ctx.restore();
   }
 }
 
 function drawFlash() {
   if (flashAlpha<=0) return;
-  ctx.fillStyle=`rgba(240,200,80,${flashAlpha.toFixed(2)})`;
-  ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle=`rgba(240,200,80,${flashAlpha.toFixed(2)})`;ctx.fillRect(0,0,CW,CH);
 }
 
 function drawStage2Anim(now) {
   if (!stage2Anim.active) return;
   const elapsed=now-stage2Anim.start;
   const progress=Math.min(1,elapsed/stage2Anim.duration);
+  const {tier}=stage2Anim;
 
-  // Dark overlay fades in then out
-  const overlayA = progress<0.35 ? progress/0.35 : progress>0.75 ? (1-progress)/0.25 : 1;
-  ctx.fillStyle=`rgba(0,0,0,${(overlayA*0.65).toFixed(2)})`;
+  const overlayA=progress<.35?progress/.35:progress>.75?(1-progress)/.25:1;
+  ctx.fillStyle=`rgba(0,0,0,${(overlayA*(tier==='epic'?.8:.65)).toFixed(2)})`;
   ctx.fillRect(0,0,CW,CH);
 
-  // Text: zooms from 2.2x to 1x, then fades
-  const textProgress=Math.min(1,progress/0.5);
-  const scale=2.2-1.2*textProgress;
-  const textAlpha = progress>0.7 ? (1-progress)/0.3 : Math.min(1,textProgress*2);
+  const textProg=Math.min(1,progress/.5);
+  const scale=2.2-1.2*textProg;
+  const textAlpha=progress>.7?(1-progress)/.3:Math.min(1,textProg*2);
 
   ctx.save();
-  ctx.translate(CW/2,CH/2);
-  ctx.scale(scale,scale);
-  ctx.shadowColor='#f0c040'; ctx.shadowBlur=50*(1-progress*0.6);
-  ctx.font='bold 60px "Orbitron",sans-serif';
+  // Epic tier: screen shake
+  if (tier==='epic'&&progress<.6&&shakeDecay>0) {
+    ctx.translate(shakeX,shakeY);
+  }
+  ctx.translate(CW/2,CH/2);ctx.scale(scale,scale);
+  ctx.shadowBlur=50*(1-progress*.6);
+  ctx.font=`bold 60px "Orbitron",sans-serif`;
   ctx.textAlign='center';
-  ctx.fillStyle=`rgba(240,192,64,${textAlpha.toFixed(2)})`;
+
+  if (tier==='epic') {
+    // Red→gold gradient text
+    const grd=ctx.createLinearGradient(-200,0,200,0);
+    grd.addColorStop(0,`rgba(255,50,0,${textAlpha.toFixed(2)})`);
+    grd.addColorStop(.5,`rgba(255,220,0,${textAlpha.toFixed(2)})`);
+    grd.addColorStop(1,`rgba(255,50,0,${textAlpha.toFixed(2)})`);
+    ctx.shadowColor='#ff4400';
+    ctx.fillStyle=grd;
+  } else if (tier==='big') {
+    ctx.shadowColor='#f0c040';
+    ctx.fillStyle=`rgba(255,220,80,${textAlpha.toFixed(2)})`;
+  } else {
+    ctx.shadowColor='#f0c040';
+    ctx.fillStyle=`rgba(240,192,64,${textAlpha.toFixed(2)})`;
+  }
   ctx.fillText('STAGE 2',0,22);
   ctx.restore();
-
   if (progress>=1) stage2Anim.active=false;
 }
 
 function drawCountup() {
   if (!countup.active&&countup.current<=0) return;
-  ctx.save();
-  ctx.textAlign='center';
+  ctx.save();ctx.textAlign='center';
   const v=Math.floor(countup.current);
-  const flicker=countup.active ? 0.85+0.15*Math.sin(Date.now()*0.04) : 1;
-
-  ctx.shadowColor='#f0c040'; ctx.shadowBlur=32*flicker;
-  ctx.font=`bold 56px "Orbitron",sans-serif`;
-  ctx.fillStyle=`rgba(240,192,64,${flicker.toFixed(2)})`;
+  const flicker=countup.active?0.85+.15*Math.sin(Date.now()*.04):1;
+  const col=countup.isHot?'255,140,0':'240,192,64';
+  ctx.shadowColor=countup.isHot?'#ff8800':'#f0c040';ctx.shadowBlur=32*flicker;
+  ctx.font='bold 56px "Orbitron",sans-serif';
+  ctx.fillStyle=`rgba(${col},${flicker.toFixed(2)})`;
   ctx.fillText(`${v}×`,CW/2,CH/2-10);
-
-  if (!countup.active) {
+  if (!countup.active){
     ctx.shadowBlur=14;
-    ctx.font='bold 28px "Exo 2",sans-serif';
-    ctx.fillStyle='#ffffff';
+    ctx.font='bold 28px "Exo 2",sans-serif';ctx.fillStyle='#ffffff';
     ctx.fillText(`£${countup.win.toFixed(2)}`,CW/2,CH/2+32);
+    if (countup.isHot){
+      ctx.font='bold 14px "Orbitron",sans-serif';ctx.fillStyle='#ff8800';
+      ctx.shadowColor='#ff6600';ctx.shadowBlur=12;
+      ctx.fillText('🔥 HOT WIN',CW/2,CH/2+56);
+    }
   }
   ctx.restore();
 }
 
 function drawMissOverlay(show) {
   if (!show) return;
-  ctx.fillStyle='rgba(0,0,0,0.52)'; ctx.fillRect(0,0,CW,CH);
-  ctx.save();
-  ctx.shadowColor='#ff4444'; ctx.shadowBlur=40;
+  ctx.fillStyle='rgba(0,0,0,0.52)';ctx.fillRect(0,0,CW,CH);
+  ctx.save();ctx.shadowColor='#ff4444';ctx.shadowBlur=40;
   ctx.font='bold 60px "Orbitron",sans-serif';
-  ctx.textAlign='center'; ctx.fillStyle='#ff5555';
+  ctx.textAlign='center';ctx.fillStyle='#ff5555';
   ctx.fillText('MISS',CW/2,CH/2+20);
   ctx.restore();
 }
 
-function renderFrame(balls, slotCounts, winningNum, winGlow, showMiss) {
+function renderFrame(balls,slotCounts,winningNum,winGlow,showMiss) {
   const now=performance.now();
-  drawBackground();
-  drawFlash();
-  drawPins(now);
-  drawSlots(slotCounts, winningNum, winGlow);
-  drawBalls(balls);
-  drawParticles();
-  drawStage2Anim(now);
-  drawCountup();
-  drawMissOverlay(showMiss);
+  // Screen shake
+  if (shakeDecay>0){
+    shakeX=(Math.random()-.5)*shakeDecay*6;
+    shakeY=(Math.random()-.5)*shakeDecay*4;
+    ctx.save();ctx.translate(shakeX,shakeY);
+  }
+  drawBackground();drawFlash();drawPins(now);
+  drawSlots(slotCounts,winningNum,winGlow);
+  drawBalls(balls);drawParticles();
+  drawStage2Anim(now);drawCountup();drawMissOverlay(showMiss);
+  if (shakeDecay>0) ctx.restore();
 }
 
 // ─── UI ──────────────────────────────────────────────────────────────────────
 function buildBetTable() {
   const container=document.getElementById('bet-table');
   const zero=document.createElement('button');
-  zero.className='bet-num green'; zero.textContent='0'; zero.dataset.num='0';
+  zero.className='bet-num green';zero.textContent='0';zero.dataset.num='0';
   container.appendChild(zero);
-  const grid=document.createElement('div'); grid.id='bet-grid';
+  const grid=document.createElement('div');grid.id='bet-grid';
   for (let row=3;row>=1;row--) {
     for (let col=0;col<12;col++) {
       const num=col*3+row;
       const btn=document.createElement('button');
       btn.className=`bet-num ${RED_N.has(num)?'red':'black'}`;
-      btn.textContent=num; btn.dataset.num=String(num);
-      grid.appendChild(btn);
+      btn.textContent=num;btn.dataset.num=String(num);grid.appendChild(btn);
     }
   }
   container.appendChild(grid);
@@ -512,35 +599,29 @@ function buildStakeButtons() {
     const btn=document.createElement('button');
     btn.className='stake-btn'+(s===stake?' active':'');
     btn.textContent=s<1?`${Math.round(s*100)}p`:`£${s}`;
-    btn.dataset.stake=String(s); wrap.appendChild(btn);
+    btn.dataset.stake=String(s);wrap.appendChild(btn);
   });
   wrap.addEventListener('click',e=>{
     const btn=e.target.closest('.stake-btn');
     if(!btn||btn.disabled)return;
     wrap.querySelectorAll('.stake-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    stake=parseFloat(btn.dataset.stake);
-    refreshBetInfo();
+    btn.classList.add('active');stake=parseFloat(btn.dataset.stake);refreshBetInfo();
   });
 }
 
 function refreshBetInfo() {
-  const n=selNums.size, tot=totalBet();
+  const n=selNums.size,tot=totalBet();
   document.getElementById('bet-total').textContent=
     n===0?'£0.00':`£${tot.toFixed(2)} (${n} number${n>1?'s':''})`;
   const can=canAfford();
   document.getElementById('drop-btn').disabled=!can||state>S.BETTING;
   document.getElementById('clear-btn').disabled=n===0||state>S.BETTING;
 }
-
-function setInteractive(on) {
+function setInteractive(on){
   document.querySelectorAll('.bet-num,.stake-btn').forEach(b=>{b.disabled=!on;});
-  if(!on){
-    document.getElementById('drop-btn').disabled=true;
-    document.getElementById('clear-btn').disabled=true;
-  }
+  if(!on){document.getElementById('drop-btn').disabled=true;document.getElementById('clear-btn').disabled=true;}
 }
-function updateBalance() {
+function updateBalance(){
   document.getElementById('balance-val').textContent=balance.toFixed(2);
   document.getElementById('lastwin-val').textContent=lastWin.toFixed(2);
 }
@@ -549,17 +630,17 @@ function showStatus(msg){document.getElementById('status-msg').textContent=msg;}
 // ─── GAME STATE ───────────────────────────────────────────────────────────────
 const S={IDLE:0,BETTING:1,DROPPING:2,CASCADE:3,PAYOUT:4};
 let state=S.IDLE;
-let balls=[], slotCounts=new Array(37).fill(0);
-let cascadeDropped=0, cascadeTimer=null, payoutShown=false;
-let winGlow=0, winningNum=null, showMiss=false;
+let balls=[],slotCounts=new Array(37).fill(0);
+let cascadeDropped=0,cascadeTimer=null,payoutShown=false;
+let winGlow=0,winningNum=null,showMiss=false;
 
-function setState(s) {
+function setState(s){
   state=s;
   const on=(s===S.IDLE||s===S.BETTING);
-  setInteractive(on); if(on)refreshBetInfo(); updateBalance();
+  setInteractive(on);if(on)refreshBetInfo();updateBalance();
 }
 
-function onToggleNumber(num) {
+function onToggleNumber(num){
   if(state!==S.IDLE&&state!==S.BETTING)return;
   if(selNums.has(num)){
     selNums.delete(num);
@@ -573,145 +654,165 @@ function onToggleNumber(num) {
   else refreshBetInfo();
 }
 
-function onClear() {
+function onClear(){
   if(state!==S.IDLE&&state!==S.BETTING)return;
   selNums.clear();
   document.querySelectorAll('.bet-num.selected').forEach(b=>b.classList.remove('selected'));
-  setState(S.IDLE); showStatus('Select numbers and drop!');
+  setState(S.IDLE);showStatus('Select numbers and drop!');
 }
 
-function onDrop() {
+function onDrop(){
   if(state!==S.BETTING||!canAfford())return;
   if(!placeBets()){showStatus('Insufficient balance!');return;}
-  resetRound(); setState(S.DROPPING); spawnBall(false);
+  resetRound();setState(S.DROPPING);spawnBall(false);
 }
 
-function resetRound() {
+function resetRound(){
   clearTimeout(cascadeTimer);
-  balls=[]; slotCounts=new Array(37).fill(0);
-  cascadeDropped=0; payoutShown=false;
-  winGlow=0; winningNum=null; showMiss=false;
-  countup={current:0,target:0,win:0,active:false};
-  stage2Anim.active=false; flashAlpha=0;
+  balls=[];slotCounts=new Array(37).fill(0);
+  cascadeDropped=0;payoutShown=false;
+  winGlow=0;winningNum=null;showMiss=false;
+  countup={current:0,target:0,win:0,active:false,isHot:false};
+  stage2Anim.active=false;flashAlpha=0;shakeDecay=0;
 }
 
-function spawnBall(isCascade) {
-  const x=(CW/2-28)+Math.random()*56;
+function spawnBall(isCascade){
+  let x;
+  if (isCascade) {
+    x=(CW/2-28)+Math.random()*56;
+  } else {
+    // Random drop across top third of board
+    x=150+Math.random()*500;
+    // Heat nudge: after enough misses, bias toward a selected number
+    const {nudgeStart,maxMisses}=CONFIG.heat;
+    if (consecutiveMisses>=nudgeStart&&selNums.size>0) {
+      const strength=Math.min(0.5,(consecutiveMisses-nudgeStart)/(maxMisses-nudgeStart)*0.5);
+      const targets=Array.from(selNums);
+      const target=targets[Math.floor(Math.random()*targets.length)];
+      const targetX=(NUMBER_TO_SLOT[target]+0.5)*SLOT_W;
+      x=x+(targetX-x)*strength;
+    }
+  }
   const b=new PhysicsBall(x,GRID_TOP-14,BALL_R);
-  b.isCascade=isCascade; balls.push(b);
+  b.isCascade=isCascade;balls.push(b);
 }
 
-function startCascade() {
-  stage2Anim.active=true; stage2Anim.start=performance.now();
-  // Start dropping ~600ms into the animation
+function startCascade(){
+  // Stake-linked drama tier
+  const tier=stake>=10?'epic':stake>=5?'big':'normal';
+  const duration=tier==='epic'?2000:tier==='big'?1600:1300;
+  stage2Anim={active:true,start:performance.now(),duration,tier};
+
+  if (tier==='epic'){shakeDecay=1;}
+  else if (tier==='big'){flashAlpha=Math.max(flashAlpha,0.4);}
+
   setTimeout(()=>{
-    setState(S.CASCADE); showStatus('30 balls dropping…');
-    cascadeDropped=0; payoutShown=false;
+    setState(S.CASCADE);showStatus('30 balls dropping…');
+    cascadeDropped=0;payoutShown=false;
     dropNextCascade();
     setTimeout(()=>{
       if(state===S.CASCADE&&!payoutShown){payoutShown=true;showPayout();}
     },CONFIG.gameplay.stage2BallCount*CONFIG.gameplay.stage2BallInterval+12000);
-  },600);
+  },tier==='epic'?800:600);
 }
 
-function dropNextCascade() {
+function dropNextCascade(){
   if(cascadeDropped>=CONFIG.gameplay.stage2BallCount)return;
-  cascadeDropped++; spawnBall(true);
+  cascadeDropped++;spawnBall(true);
   if(cascadeDropped<CONFIG.gameplay.stage2BallCount)
     cascadeTimer=setTimeout(dropNextCascade,CONFIG.gameplay.stage2BallInterval);
 }
 
-function checkSettlement() {
-  for (const ball of balls) {
+function checkSettlement(){
+  for (const ball of balls){
     if(ball.settled||ball.removed)continue;
     if(ball.y>SLOT_TOP+22){
-      ball.settled=true; ball.slotIndex=getSlotIndex(ball.x);
+      ball.settled=true;ball.slotIndex=getSlotIndex(ball.x);
       if(ball.isCascade)slotCounts[ball.slotIndex]++;
       setTimeout(()=>{ball.removed=true;ball.active=false;},600);
     }
   }
 }
 
-function checkStage1() {
-  for (const ball of balls) {
+function checkStage1(){
+  for (const ball of balls){
     if(ball.processed||!ball.settled||ball.isCascade)continue;
     ball.processed=true;
     const landed=SLOT_NUMBERS[ball.slotIndex];
     if(selNums.has(landed)){
-      winningNum=landed; winGlow=1; flashAlpha=0.7;
+      winningNum=landed;winGlow=1;flashAlpha=0.7;
+      consecutiveMisses=0;updateHeatMeter();
       setState(S.PAYOUT);
       setTimeout(startCascade,400);
     } else {
-      showMiss=true; setState(S.PAYOUT);
+      consecutiveMisses++;updateHeatMeter();
+      showMiss=true;setState(S.PAYOUT);
       setTimeout(()=>{
-        showMiss=false; balls=[];
-        setState(S.BETTING); showStatus('Miss! Drop again or change numbers.'); refreshBetInfo();
+        showMiss=false;balls=[];
+        setState(S.BETTING);showStatus('Miss! Drop again or change numbers.');refreshBetInfo();
       },1600);
     }
   }
 }
 
-function checkCascadeComplete() {
+function checkCascadeComplete(){
   if(state!==S.CASCADE||payoutShown)return;
   if(cascadeDropped<CONFIG.gameplay.stage2BallCount)return;
   const settled=balls.filter(b=>b.isCascade&&b.settled).length;
   if(settled>=CONFIG.gameplay.stage2BallCount){payoutShown=true;setTimeout(showPayout,650);}
 }
 
-function showPayout() {
+function showPayout(){
   const winSlot=NUMBER_TO_SLOT[winningNum];
   const ballsInWin=slotCounts[winSlot]||0;
-  const {mult,win}=calcPayout(ballsInWin);
+  const isHot=hotNums.has(winningNum);
+  const {mult,win}=calcPayout(ballsInWin,isHot);
 
-  flashAlpha=0.6; winGlow=1;
-  // Start count-up animation
-  countup={current:0,target:mult,win,active:true};
+  flashAlpha=0.6;winGlow=1;
+  if (stake>=10){shakeDecay=0.8;}
+  countup={current:0,target:mult,win,active:true,isHot};
   setState(S.PAYOUT);
 
-  // Particles — more for bigger wins
-  const winSlotX=(winSlot+0.5)*SLOT_W;
-  const particleCount=ballsInWin>=5?120:ballsInWin>=3?80:ballsInWin>=1?50:30;
-  spawnParticles(winSlotX, SLOT_TOP, particleCount);
+  const winSlotX=(winSlot+.5)*SLOT_W;
+  const pCount=ballsInWin>=5?120:ballsInWin>=3?80:ballsInWin>=1?50:30;
+  // Hot wins get fire particles; big stake gets extra count
+  const pCols=isHot?HOT_WIN_COLS:CONFETTI_COLS;
+  const pMult=stake>=10?2:stake>=5?1.5:1;
+  spawnParticles(winSlotX,SLOT_TOP,Math.round(pCount*pMult),pCols);
 
-  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}× — £${win.toFixed(2)}`);
+  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${isHot?' 🔥':''} — £${win.toFixed(2)}`);
 
   setTimeout(()=>{
-    winGlow=0; balls=[]; slotCounts=new Array(37).fill(0); winningNum=null;
-    setState(S.BETTING); refreshBetInfo(); showStatus('Drop again or change numbers!');
+    winGlow=0;balls=[];slotCounts=new Array(37).fill(0);winningNum=null;shakeDecay=0;
+    setState(S.BETTING);refreshBetInfo();showStatus('Drop again or change numbers!');
   },4500);
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────────────────────
-function gameLoop() {
+function gameLoop(){
   stepPhysics(balls,PINS,RECTS);
-  checkSettlement(); checkStage1();
+  checkSettlement();checkStage1();
   if(state===S.CASCADE)checkCascadeComplete();
 
-  // Flash decay
   if(flashAlpha>0) flashAlpha=Math.max(0,flashAlpha-0.035);
-
-  // Win glow pulse
+  if(shakeDecay>0) shakeDecay=Math.max(0,shakeDecay-0.04);
   if(winGlow>0&&(state===S.CASCADE||state===S.PAYOUT))
-    winGlow=0.55+0.45*Math.abs(Math.sin(Date.now()*0.0045));
-
-  // Count-up animation
-  if(countup.active) {
-    countup.current=Math.min(countup.target, countup.current+countup.target/45);
-    if(countup.current>=countup.target) countup.active=false;
+    winGlow=0.55+.45*Math.abs(Math.sin(Date.now()*.0045));
+  if(countup.active){
+    countup.current=Math.min(countup.target,countup.current+countup.target/45);
+    if(countup.current>=countup.target)countup.active=false;
   }
-
-  // Particle update
   updateParticles();
-
   renderFrame(balls,slotCounts,winningNum,winGlow,showMiss);
   requestAnimationFrame(gameLoop);
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-buildBetTable(); buildStakeButtons();
+buildBetTable();buildStakeButtons();
 document.getElementById('drop-btn').addEventListener('click',onDrop);
 document.getElementById('clear-btn').addEventListener('click',onClear);
-setState(S.IDLE); showStatus('Select numbers and drop!');
+setState(S.IDLE);showStatus('Select numbers and drop!');
+scheduleNextHot();
 requestAnimationFrame(gameLoop);
 </script>
 </body>
