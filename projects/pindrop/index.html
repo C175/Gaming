@@ -294,19 +294,55 @@ function clearLightningUI(){
     b.classList.remove('bolt-lit','bolt-strike');
     delete b.dataset.lmult;
   });
+  canvasBolts.length=0;
+  lightningOverlay.alpha=0;
 }
 
-function animateLightning(entries, i, done){
-  if(i>=entries.length){ setTimeout(done,260); return; }
-  const [num,mult]=entries[i];
+function makeBolt(targetSlotX){
+  const x0=CW/2+(Math.random()-0.5)*140;
+  const y0=-12;
+  const x1=targetSlotX+(Math.random()-0.5)*SLOT_W*0.6;
+  const y1=SLOT_TOP-4;
+  const pts=[{x:x0,y:y0}];
+  const segs=11;
+  for(let i=1;i<segs;i++){
+    const t=i/segs, jitter=(1-t)*85*(Math.random()-0.5);
+    pts.push({x:x0+(x1-x0)*t+jitter, y:y0+(y1-y0)*t});
+  }
+  pts.push({x:x1,y:y1});
+  return pts;
+}
+
+function fireBolt(num, mult){
   const btn=document.querySelector(`[data-num="${num}"]`);
   if(btn){
     btn.dataset.lmult=`${mult}×`;
     btn.classList.remove('bolt-strike');
-    void btn.offsetWidth; // force reflow to restart animation
+    void btn.offsetWidth;
     btn.classList.add('bolt-strike','bolt-lit');
   }
-  setTimeout(()=>animateLightning(entries,i+1,done), 420);
+  const slotX=(NUMBER_TO_SLOT[num]+0.5)*SLOT_W;
+  canvasBolts.push({pts:makeBolt(slotX),born:performance.now()});
+  // Second fork 65ms later for forked-lightning feel
+  setTimeout(()=>canvasBolts.push({pts:makeBolt(slotX),born:performance.now()}),65);
+  boltFlash=0.7;
+  shakeDecay=Math.max(shakeDecay,0.55);
+  Sound.zap();
+}
+
+function animateLightning(entries,i,done){
+  if(i>=entries.length){
+    // All bolts struck — thunder and let it breathe
+    boltFlash=Math.max(boltFlash,0.3);
+    Sound.thunder();
+    setTimeout(()=>{
+      lightningOverlay.alpha=0;
+      done();
+    },650);
+    return;
+  }
+  fireBolt(...entries[i]);
+  setTimeout(()=>animateLightning(entries,i+1,done),580);
 }
 
 // ─── HOT NUMBERS ─────────────────────────────────────────────────────────────
@@ -394,6 +430,65 @@ function updateParticles() {
   for (let i=particles.length-1;i>=0;i--) if(particles[i].life<=0) particles.splice(i,1);
 }
 
+// ─── SOUND ───────────────────────────────────────────────────────────────────
+const Sound=(()=>{
+  let ac=null;
+  function init(){
+    if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();
+    if(ac.state==='suspended')ac.resume();
+    return ac;
+  }
+  function mkNoise(c,dur){
+    const n=Math.ceil(c.sampleRate*dur),buf=c.createBuffer(1,n,c.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    return buf;
+  }
+  function zap(){
+    const c=init(),t=c.currentTime;
+    // Crack: shaped white noise
+    const buf=mkNoise(c,0.25),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]*=Math.exp(-i/(d.length*0.08));
+    const src=c.createBufferSource();src.buffer=buf;
+    const bp=c.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3800;bp.Q.value=0.6;
+    const g=c.createGain();g.gain.setValueAtTime(0.75,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+    src.connect(bp);bp.connect(g);g.connect(c.destination);src.start(t);src.stop(t+0.25);
+    // Electric buzz sweep
+    const osc=c.createOscillator();osc.type='sawtooth';
+    osc.frequency.setValueAtTime(260,t);osc.frequency.exponentialRampToValueAtTime(50,t+0.14);
+    const og=c.createGain();og.gain.setValueAtTime(0.22,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+    osc.connect(og);og.connect(c.destination);osc.start(t);osc.stop(t+0.16);
+  }
+  function thunder(){
+    const c=init(),t=c.currentTime;
+    const buf=mkNoise(c,2),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]*=Math.exp(-i/(d.length*0.32))*(1+0.4*Math.sin(i*0.007));
+    const src=c.createBufferSource();src.buffer=buf;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=180;
+    const g=c.createGain();g.gain.setValueAtTime(0.6,t);g.gain.exponentialRampToValueAtTime(0.001,t+2);
+    src.connect(lp);lp.connect(g);g.connect(c.destination);src.start(t);src.stop(t+2);
+  }
+  function whoosh(){
+    const c=init(),t=c.currentTime;
+    const osc=c.createOscillator();osc.type='sine';
+    osc.frequency.setValueAtTime(420,t);osc.frequency.exponentialRampToValueAtTime(65,t+0.5);
+    const g=c.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.3,t+0.07);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+    osc.connect(g);g.connect(c.destination);osc.start(t);osc.stop(t+0.5);
+  }
+  function win(){
+    const c=init(),t=c.currentTime;
+    [0,4,7,12].forEach((semi,i)=>{
+      const freq=440*Math.pow(2,semi/12);
+      const osc=c.createOscillator();osc.type='triangle';osc.frequency.value=freq;
+      const g=c.createGain();
+      g.gain.setValueAtTime(0,t+i*0.11);g.gain.linearRampToValueAtTime(0.16,t+i*0.11+0.05);
+      g.gain.exponentialRampToValueAtTime(0.001,t+i*0.11+0.55);
+      osc.connect(g);g.connect(c.destination);osc.start(t+i*0.11);osc.stop(t+i*0.11+0.55);
+    });
+  }
+  return{zap,thunder,whoosh,win};
+})();
+
 // ─── RENDERER ────────────────────────────────────────────────────────────────
 const canvas=document.getElementById('gameCanvas');
 const ctx=canvas.getContext('2d');
@@ -408,6 +503,9 @@ fc.beginPath();fc.moveTo(20,0);fc.lineTo(0,20);fc.stroke();
 const feltPattern=ctx.createPattern(feltCanvas,'repeat');
 
 let flashAlpha=0, shakeX=0, shakeY=0, shakeDecay=0;
+let boltFlash=0; // blue-white screen flash during lightning strikes
+let canvasBolts=[]; // [{pts,alpha,born}]
+let lightningOverlay={alpha:0,start:0}; // "⚡ LIGHTNING ⚡" canvas text
 let countup={current:0,target:0,win:0,active:false,isHot:false};
 let stage2Anim={active:false,start:0,duration:1300,tier:'normal'};
 
@@ -526,6 +624,42 @@ function drawFlash() {
   if (flashAlpha<=0) return;
   ctx.fillStyle=`rgba(240,200,80,${flashAlpha.toFixed(2)})`;ctx.fillRect(0,0,CW,CH);
 }
+function drawBoltFlash() {
+  if (boltFlash<=0) return;
+  ctx.fillStyle=`rgba(180,215,255,${boltFlash.toFixed(2)})`;ctx.fillRect(0,0,CW,CH);
+}
+function drawCanvasBolts(now) {
+  for (const bolt of canvasBolts) {
+    const age=now-bolt.born, a=Math.max(0,1-age/380);
+    if (a<=0) continue;
+    // Outer glow
+    ctx.save();ctx.globalAlpha=a*0.6;ctx.strokeStyle='rgba(140,200,255,0.5)';
+    ctx.lineWidth=9;ctx.shadowColor='#88ccff';ctx.shadowBlur=22;
+    ctx.beginPath();ctx.moveTo(bolt.pts[0].x,bolt.pts[0].y);
+    for (const p of bolt.pts) ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    // Core white
+    ctx.globalAlpha=a;ctx.strokeStyle='#e8f4ff';ctx.lineWidth=2.5;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.moveTo(bolt.pts[0].x,bolt.pts[0].y);
+    for (const p of bolt.pts) ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    ctx.restore();
+  }
+  for (let i=canvasBolts.length-1;i>=0;i--) {
+    if (performance.now()-canvasBolts[i].born>380) canvasBolts.splice(i,1);
+  }
+}
+function drawLightningOverlay(now) {
+  if (lightningOverlay.alpha<=0) return;
+  const a=lightningOverlay.alpha;
+  ctx.fillStyle=`rgba(0,0,0,${(a*0.6).toFixed(2)})`;ctx.fillRect(0,0,CW,CH);
+  ctx.save();
+  ctx.textAlign='center';ctx.font='bold 54px "Orbitron",sans-serif';
+  ctx.shadowColor='#88ccff';ctx.shadowBlur=50*a;
+  ctx.fillStyle=`rgba(190,225,255,${a.toFixed(2)})`;
+  ctx.fillText('⚡  LIGHTNING  ⚡',CW/2,CH/2+18);
+  ctx.restore();
+}
 
 function drawStage2Anim(now) {
   if (!stage2Anim.active) return;
@@ -612,10 +746,11 @@ function renderFrame(balls,slotCounts,winningNum,winGlow,showMiss) {
     shakeY=(Math.random()-.5)*shakeDecay*4;
     ctx.save();ctx.translate(shakeX,shakeY);
   }
-  drawBackground();drawFlash();drawPins(now);
+  drawBackground();drawFlash();drawBoltFlash();drawPins(now);
   drawSlots(slotCounts,winningNum,winGlow);
-  drawBalls(balls);drawParticles();
+  drawBalls(balls);drawParticles();drawCanvasBolts(now);
   drawStage2Anim(now);drawCountup();drawMissOverlay(showMiss);
+  drawLightningOverlay(now);
   if (shakeDecay>0) ctx.restore();
 }
 
@@ -731,11 +866,15 @@ function onDrop(){
   setState(S.DROPPING);
   showStatus('⚡ Lightning multipliers!');
 
-  // Animate bolts then launch ball
-  animateLightning(Array.from(lightningNums.entries()),0,()=>{
-    showStatus('');
-    spawnBall(false);
-  });
+  // Show overlay then fire bolts, then launch ball
+  lightningOverlay={alpha:1,start:performance.now()};
+  setTimeout(()=>{
+    animateLightning(Array.from(lightningNums.entries()),0,()=>{
+      showStatus('');
+      Sound.whoosh();
+      spawnBall(false);
+    });
+  },480);
 }
 
 function resetRound(){
@@ -847,6 +986,7 @@ function showPayout(){
 
   flashAlpha=0.6;winGlow=1;
   if (stake>=10){shakeDecay=0.8;}
+  Sound.win();
   countup={current:0,target:mult,win,active:true,isHot};
   setState(S.PAYOUT);
 
@@ -873,6 +1013,11 @@ function gameLoop(){
   if(state===S.CASCADE)checkCascadeComplete();
 
   if(flashAlpha>0) flashAlpha=Math.max(0,flashAlpha-0.035);
+  if(boltFlash>0) boltFlash=Math.max(0,boltFlash-0.038);
+  if(lightningOverlay.alpha>0){
+    const age=performance.now()-lightningOverlay.start;
+    if(age>320) lightningOverlay.alpha=Math.max(0,lightningOverlay.alpha-0.03);
+  }
   if(shakeDecay>0) shakeDecay=Math.max(0,shakeDecay-0.04);
   if(winGlow>0&&(state===S.CASCADE||state===S.PAYOUT))
     winGlow=0.55+.45*Math.abs(Math.sin(Date.now()*.0045));
