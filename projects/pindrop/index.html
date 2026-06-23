@@ -17,36 +17,47 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
 #balance-info strong{color:#f0c040;font-size:15px}
 #gameCanvas{display:block;background:#0d0d1a;border-left:1px solid rgba(255,255,255,0.06);
   border-right:1px solid rgba(255,255,255,0.06)}
+/* ── Bet table ── */
 #bet-table{display:flex;align-items:stretch;gap:3px;padding:6px 4px;
   background:rgba(0,35,16,0.55);border-top:1px solid rgba(0,180,70,0.18);
   border-bottom:1px solid rgba(0,180,70,0.18)}
 .bet-num{height:38px;border:1px solid rgba(255,255,255,0.14);border-radius:3px;cursor:pointer;
-  font-size:11px;font-weight:700;color:#fff;transition:transform .1s,border-color .1s,box-shadow .1s;line-height:1}
+  font-size:11px;font-weight:700;color:#fff;
+  transition:transform .1s,border-color .1s,box-shadow .1s,background .1s;line-height:1}
 .bet-num:hover:not(:disabled){transform:scaleY(1.12);border-color:#f0c040;z-index:1}
-.bet-num.selected{border-color:#f0c040!important;
-  box-shadow:0 0 12px rgba(240,192,64,.6),inset 0 0 10px rgba(240,192,64,.2)}
+.bet-num.selected{border-color:#f0c040!important;background:#7a5800!important;
+  box-shadow:0 0 12px rgba(240,192,64,.6),inset 0 0 10px rgba(240,192,64,.25)}
 .bet-num:disabled{opacity:.38;cursor:not-allowed;transform:none}
 .bet-num.green{background:#1a6b30;width:38px;flex-shrink:0;font-size:14px}
 .bet-num.red{background:#7a1515}
 .bet-num.black{background:#181828}
 #bet-grid{display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(3,38px);gap:3px;flex:1}
-#controls{display:flex;align-items:center;gap:14px;padding:10px 14px;
+/* ── Controls ── */
+#controls{display:flex;align-items:center;gap:12px;padding:10px 14px;
   background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
 #stake-area{display:flex;align-items:center;gap:8px;font-size:12px;color:#556677}
-#stake-btns{display:flex;gap:5px}
-.stake-btn{padding:5px 13px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
-  border-radius:4px;color:#99aabb;font-size:13px;font-weight:600;cursor:pointer;
+#stake-btns{display:flex;gap:4px;flex-wrap:wrap}
+.stake-btn{padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);
+  border-radius:4px;color:#99aabb;font-size:12px;font-weight:600;cursor:pointer;
   transition:border-color .12s,color .12s,background .12s}
 .stake-btn:hover:not(:disabled){border-color:#f0c040;color:#f0c040}
 .stake-btn.active{background:rgba(240,192,64,.14);border-color:#f0c040;color:#f0c040}
 .stake-btn:disabled{opacity:.38;cursor:not-allowed}
-#drop-btn{padding:9px 26px;background:linear-gradient(135deg,#c8a020,#f0c040);border:none;
+#drop-btn{padding:9px 22px;background:linear-gradient(135deg,#c8a020,#f0c040);border:none;
   border-radius:5px;color:#0d0d1a;font-size:14px;font-weight:900;letter-spacing:2px;cursor:pointer;
-  transition:transform .12s,box-shadow .12s,background .12s;text-transform:uppercase}
+  transition:transform .12s,box-shadow .12s,background .12s;text-transform:uppercase;white-space:nowrap}
 #drop-btn:hover:not(:disabled){background:linear-gradient(135deg,#d4aa28,#ffe060);
   transform:translateY(-2px);box-shadow:0 5px 22px rgba(240,192,64,.45)}
 #drop-btn:disabled{opacity:.28;cursor:not-allowed;transform:none;box-shadow:none}
-#status-msg{margin-left:auto;font-size:12px;color:#556677;font-style:italic;max-width:280px;text-align:right}
+#bet-info{font-size:12px;color:#667788;white-space:nowrap}
+#bet-info span{color:#f0c040;font-weight:700}
+#status-msg{margin-left:auto;font-size:12px;color:#556677;font-style:italic;max-width:240px;text-align:right}
+#clear-btn{padding:5px 10px;background:rgba(255,60,60,.08);border:1px solid rgba(255,60,60,.25);
+  border-radius:4px;color:#cc6666;font-size:11px;cursor:pointer;white-space:nowrap;
+  transition:border-color .12s,color .12s}
+#clear-btn:hover:not(:disabled){border-color:#ff6666;color:#ff9999}
+#clear-btn:disabled{opacity:.3;cursor:not-allowed}
+/* ── Payout ref ── */
 #payout-ref{display:flex;justify-content:center;gap:16px;padding:8px 16px;
   background:rgba(255,255,255,.018);border-top:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
 .pref{font-size:11px;color:#445566}
@@ -68,8 +79,10 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
   <div id="bet-table"></div>
   <div id="controls">
     <div id="stake-area"><span>Stake:</span><div id="stake-btns"></div></div>
+    <div id="bet-info">Bet: <span id="bet-total">£0.00</span></div>
+    <button id="clear-btn" disabled>Clear</button>
     <button id="drop-btn" disabled>DROP BALL</button>
-    <div id="status-msg">Select a number and drop!</div>
+    <div id="status-msg">Select numbers and drop!</div>
   </div>
   <div id="payout-ref">
     <span class="pref">0 balls <strong>70×</strong></span>
@@ -82,71 +95,61 @@ header{display:flex;justify-content:space-between;align-items:center;padding:12p
 </div>
 
 <script>
-// ─── CONFIG ─────────────────────────────────────────────────────────────────
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
 const CONFIG = {
   branding:  { primaryColour: '#f0c040', backgroundColor: '#0d0d1a' },
-  gameplay:  { stakeOptions: [1,2,5,10], startingBalance: 100,
+  gameplay:  { stakeOptions: [0.20, 0.50, 1, 2, 5, 10], startingBalance: 100,
                stage2BallCount: 30, stage2BallInterval: 200 },
   rtp:       { payoutTable: { 0:70, 1:15, 2:20, 3:30, 4:50, 5:100 } },
 };
 
-// ─── PHYSICS ENGINE ──────────────────────────────────────────────────────────
-// Lightweight custom physics: circles + axis-aligned rect obstacles
+// ─── PHYSICS ─────────────────────────────────────────────────────────────────
 class PhysicsBall {
   constructor(x, y, r) {
     this.x = x; this.y = y; this.r = r;
-    this.vx = (Math.random() - 0.5) * 0.6;
+    this.vx = (Math.random() - 0.5) * 0.5;
     this.vy = 0;
-    this.active  = true;
-    this.settled = false;
-    this.removed = false;
+    this.active    = true;
+    this.settled   = false;
+    this.removed   = false;
     this.slotIndex = -1;
     this.isCascade = false;
     this.processed = false;
   }
 }
 
-const GRAVITY   = 0.28;
+const GRAVITY     = 0.28;
 const RESTITUTION = 0.46;
-const AIR_FRIC  = 0.9985;
-const SUBSTEPS  = 3;
+const AIR_FRIC    = 0.9985;
+const SUBSTEPS    = 3;
 
-// Resolve ball vs static circle (pin)
 function resolvePin(ball, pin) {
-  const dx   = ball.x - pin.x;
-  const dy   = ball.y - pin.y;
-  const dist2 = dx*dx + dy*dy;
-  const minD  = ball.r + pin.r;
-  if (dist2 >= minD * minD) return;
-  const dist = Math.sqrt(dist2) || 0.001;
-  const nx = dx / dist, ny = dy / dist;
-  // push out
-  const overlap = minD - dist;
-  ball.x += nx * overlap;
-  ball.y += ny * overlap;
-  // reflect if moving toward pin
-  const dot = ball.vx * nx + ball.vy * ny;
+  const dx = ball.x - pin.x, dy = ball.y - pin.y;
+  const d2 = dx*dx + dy*dy, minD = ball.r + pin.r;
+  if (d2 >= minD*minD) return;
+  const d = Math.sqrt(d2) || 0.001;
+  const nx = dx/d, ny = dy/d;
+  ball.x += nx*(minD-d); ball.y += ny*(minD-d);
+  const dot = ball.vx*nx + ball.vy*ny;
   if (dot < 0) {
-    ball.vx -= (1 + RESTITUTION) * dot * nx + (Math.random()-0.5)*0.15;
-    ball.vy -= (1 + RESTITUTION) * dot * ny;
+    ball.vx -= (1+RESTITUTION)*dot*nx + (Math.random()-0.5)*0.18;
+    ball.vy -= (1+RESTITUTION)*dot*ny;
   }
 }
 
-// Resolve ball vs axis-aligned rectangle {x,y,w,h}
 function resolveRect(ball, rect) {
-  const cx = Math.max(rect.x, Math.min(ball.x, rect.x + rect.w));
-  const cy = Math.max(rect.y, Math.min(ball.y, rect.y + rect.h));
-  const dx = ball.x - cx, dy = ball.y - cy;
-  const dist2 = dx*dx + dy*dy;
-  if (dist2 >= ball.r * ball.r) return;
-  const dist = Math.sqrt(dist2) || 0.001;
-  const nx = dx / dist, ny = dy / dist;
-  ball.x += nx * (ball.r - dist);
-  ball.y += ny * (ball.r - dist);
-  const dot = ball.vx * nx + ball.vy * ny;
+  const cx = Math.max(rect.x, Math.min(ball.x, rect.x+rect.w));
+  const cy = Math.max(rect.y, Math.min(ball.y, rect.y+rect.h));
+  const dx = ball.x-cx, dy = ball.y-cy;
+  const d2 = dx*dx + dy*dy;
+  if (d2 >= ball.r*ball.r) return;
+  const d = Math.sqrt(d2) || 0.001;
+  const nx = dx/d, ny = dy/d;
+  ball.x += nx*(ball.r-d); ball.y += ny*(ball.r-d);
+  const dot = ball.vx*nx + ball.vy*ny;
   if (dot < 0) {
-    ball.vx -= (1 + RESTITUTION) * dot * nx;
-    ball.vy -= (1 + RESTITUTION) * dot * ny;
+    ball.vx -= (1+RESTITUTION)*dot*nx;
+    ball.vy -= (1+RESTITUTION)*dot*ny;
   }
 }
 
@@ -156,53 +159,50 @@ function stepPhysics(balls, pins, rects) {
     for (const ball of balls) {
       if (!ball.active || ball.removed) continue;
       ball.vy += g;
-      ball.vx *= AIR_FRIC;
-      ball.vy *= AIR_FRIC;
+      ball.vx *= AIR_FRIC; ball.vy *= AIR_FRIC;
       ball.x  += ball.vx / SUBSTEPS;
       ball.y  += ball.vy / SUBSTEPS;
-      for (const pin of pins)   resolvePin(ball, pin);
+      for (const pin  of pins)  resolvePin(ball, pin);
       for (const rect of rects) resolveRect(ball, rect);
     }
   }
 }
 
-// ─── WORLD SETUP ────────────────────────────────────────────────────────────
+// ─── WORLD ───────────────────────────────────────────────────────────────────
 const CW       = 800;
 const CH       = 460;
 const SLOT_TOP = 368;
 const SLOT_N   = 37;
 const SLOT_W   = CW / SLOT_N;
-const PIN_R    = 5.5;
+const PIN_R    = 6;
 const BALL_R   = 8;
 
-// Pin grid: 8 rows, alternating 11/10 pins
-const PIN_SPACING_X = 70;
-const PIN_SPACING_Y = 38;
-const GRID_TOP      = 58;
+// Triangle pin grid: row r (1–10) has r pins, all centered on CW/2
+const PIN_ROWS      = 10;
+const PIN_SPACING_X = 56;
+const PIN_SPACING_Y = 34;
+const GRID_TOP      = 42; // y of the single top pin
 
 const PINS = [];
-for (let row = 0; row < 8; row++) {
-  const even  = row % 2 === 0;
-  const count = even ? 11 : 10;
-  const startX = even ? 35 : 35 + PIN_SPACING_X / 2;
-  const y      = GRID_TOP + 10 + row * PIN_SPACING_Y;
-  for (let col = 0; col < count; col++) {
+for (let row = 1; row <= PIN_ROWS; row++) {
+  const y      = GRID_TOP + (row-1) * PIN_SPACING_Y;
+  const startX = CW/2 - (row-1) * PIN_SPACING_X / 2;
+  for (let col = 0; col < row; col++) {
     PINS.push({ x: startX + col * PIN_SPACING_X, y, r: PIN_R });
   }
 }
 
-// Static rects: left/right walls, floor, slot dividers
-const RECTS = [];
-RECTS.push({ x:-12, y:0,    w:12, h:CH+20 }); // left wall
-RECTS.push({ x:CW,  y:0,    w:12, h:CH+20 }); // right wall
-RECTS.push({ x:0,   y:CH,   w:CW, h:12    }); // floor
-// Slot dividers
+// Static boundary rects
+const RECTS = [
+  { x:-12, y:0,  w:12, h:CH+20 }, // left wall
+  { x:CW,  y:0,  w:12, h:CH+20 }, // right wall
+  { x:0,   y:CH, w:CW, h:12    }, // floor
+];
 const DIV_W = 3;
-for (let i = 1; i < SLOT_N; i++) {
-  RECTS.push({ x: i*SLOT_W - DIV_W/2, y: SLOT_TOP, w: DIV_W, h: CH - SLOT_TOP + 12 });
-}
+for (let i = 1; i < SLOT_N; i++)
+  RECTS.push({ x: i*SLOT_W - DIV_W/2, y: SLOT_TOP, w: DIV_W, h: CH-SLOT_TOP+12 });
 
-// Slot number mapping (European roulette wheel order)
+// Slot ↔ roulette number mapping
 const SLOT_NUMBERS = [
   0,32,15,19, 4,21, 2,25,17,34,
   6,27,13,36,11,30, 8,23,10, 5,
@@ -211,22 +211,24 @@ const SLOT_NUMBERS = [
 ];
 const NUMBER_TO_SLOT = {};
 SLOT_NUMBERS.forEach((n,i) => { NUMBER_TO_SLOT[n] = i; });
+function getSlotIndex(x) { return Math.max(0, Math.min(SLOT_N-1, Math.floor(x/SLOT_W))); }
 
-function getSlotIndex(x) {
-  return Math.max(0, Math.min(SLOT_N-1, Math.floor(x / SLOT_W)));
-}
-
-// ─── BETTING ────────────────────────────────────────────────────────────────
+// ─── BETTING ─────────────────────────────────────────────────────────────────
 let balance  = CONFIG.gameplay.startingBalance;
-let stake    = CONFIG.gameplay.stakeOptions[0];
-let selNum   = null;
+let stake    = CONFIG.gameplay.stakeOptions[2]; // default £1
+let selNums  = new Set();  // multi-select
 let lastWin  = 0;
 
-function placeBet() {
-  if (selNum === null || balance < stake) return false;
-  balance = +(balance - stake).toFixed(2);
+function totalBet()  { return +(stake * selNums.size).toFixed(2); }
+function canAfford() { return selNums.size > 0 && balance >= totalBet(); }
+
+function placeBets() {
+  const cost = totalBet();
+  if (!canAfford()) return false;
+  balance = +(balance - cost).toFixed(2);
   return true;
 }
+
 function calcPayout(ballCount) {
   const table = CONFIG.rtp.payoutTable;
   const mult  = table[Math.min(ballCount, 5)];
@@ -236,13 +238,12 @@ function calcPayout(ballCount) {
   return { mult, win };
 }
 
-// ─── RENDERER ───────────────────────────────────────────────────────────────
+// ─── RENDERER ────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('gameCanvas');
 const ctx    = canvas.getContext('2d');
 const RED_N  = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
-function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
-  // Background
+function renderFrame(balls, slotCounts, winningNum, winGlow, overlayText, payoutPopup) {
   ctx.fillStyle = CONFIG.branding.backgroundColor;
   ctx.fillRect(0, 0, CW, CH);
 
@@ -254,9 +255,9 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
     ctx.fillStyle = g; ctx.fill();
   }
 
-  // Win glow behind slot
-  if (selNum !== null && winGlow > 0) {
-    const idx = NUMBER_TO_SLOT[selNum];
+  // Win glow on hitting slot
+  if (winningNum !== null && winGlow > 0) {
+    const idx = NUMBER_TO_SLOT[winningNum];
     if (idx !== undefined) {
       const sx = idx * SLOT_W;
       const g  = ctx.createLinearGradient(sx, SLOT_TOP, sx, CH);
@@ -267,17 +268,30 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
     }
   }
 
+  // Highlight all selected-number slots (dim gold tint while betting)
+  if (winningNum === null) {
+    for (const num of selNums) {
+      const idx = NUMBER_TO_SLOT[num];
+      if (idx === undefined) continue;
+      ctx.fillStyle = 'rgba(240,192,64,0.07)';
+      ctx.fillRect(idx*SLOT_W+1, SLOT_TOP+2, SLOT_W-2, CH-SLOT_TOP-3);
+    }
+  }
+
   // Slots
   const slotH = CH - SLOT_TOP;
   for (let i = 0; i < SLOT_N; i++) {
     const sx  = i * SLOT_W;
     const num = SLOT_NUMBERS[i];
-    const isW = num === selNum;
+    const isW = num === winningNum;
+    const isSel = selNums.has(num) && winningNum === null;
     const cnt = slotCounts ? (slotCounts[i]||0) : 0;
     ctx.fillStyle = isW ? 'rgba(240,192,64,0.10)' : 'rgba(255,255,255,0.02)';
     ctx.fillRect(sx+1, SLOT_TOP+2, SLOT_W-2, slotH-3);
     ctx.font = '8px monospace'; ctx.textAlign = 'center';
-    ctx.fillStyle = isW ? CONFIG.branding.primaryColour : (RED_N.has(num) ? '#773333' : '#335566');
+    ctx.fillStyle = isW   ? CONFIG.branding.primaryColour
+                  : isSel ? '#c8a030'
+                  : RED_N.has(num) ? '#773333' : '#335566';
     ctx.fillText(num, sx + SLOT_W/2, SLOT_TOP+13);
     if (cnt > 0) {
       ctx.font = `bold ${cnt>9?9:11}px monospace`;
@@ -285,7 +299,6 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
       ctx.fillText(cnt, sx + SLOT_W/2, CH-6);
     }
   }
-  // Divider lines
   ctx.fillStyle = '#253545';
   for (let i = 0; i <= SLOT_N; i++) ctx.fillRect(i*SLOT_W, SLOT_TOP, 1, slotH);
   ctx.fillStyle = '#3a5264'; ctx.fillRect(0, SLOT_TOP, CW, 2);
@@ -293,8 +306,7 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
   // Balls
   for (const ball of balls) {
     if (ball.removed) continue;
-    const { x, y, isCascade } = ball;
-    const r = BALL_R;
+    const { x, y, isCascade } = ball, r = BALL_R;
     const halo = ctx.createRadialGradient(x,y,0,x,y,r*3.2);
     halo.addColorStop(0, isCascade ? 'rgba(140,205,255,0.28)' : 'rgba(255,255,255,0.28)');
     halo.addColorStop(1, 'rgba(0,0,0,0)');
@@ -322,8 +334,7 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
 
   // Payout popup
   if (payoutPopup) {
-    ctx.save();
-    ctx.textAlign = 'center';
+    ctx.save(); ctx.textAlign = 'center';
     ctx.shadowColor = CONFIG.branding.primaryColour; ctx.shadowBlur = 28;
     ctx.font = 'bold 52px "Segoe UI",Arial,sans-serif';
     ctx.fillStyle = CONFIG.branding.primaryColour;
@@ -336,7 +347,7 @@ function renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup) {
   }
 }
 
-// ─── UI BUILDERS ────────────────────────────────────────────────────────────
+// ─── UI BUILDERS ─────────────────────────────────────────────────────────────
 function buildBetTable() {
   const container = document.getElementById('bet-table');
   const zero = document.createElement('button');
@@ -356,9 +367,7 @@ function buildBetTable() {
   container.addEventListener('click', e => {
     const btn = e.target.closest('[data-num]');
     if (!btn || btn.disabled) return;
-    document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    onSelectNumber(parseInt(btn.dataset.num, 10));
+    onToggleNumber(parseInt(btn.dataset.num, 10));
   });
 }
 
@@ -366,8 +375,9 @@ function buildStakeButtons() {
   const wrap = document.getElementById('stake-btns');
   CONFIG.gameplay.stakeOptions.forEach((s, i) => {
     const btn = document.createElement('button');
-    btn.className = 'stake-btn' + (i===0?' active':'');
-    btn.textContent = `£${s}`; btn.dataset.stake = String(s);
+    const label = s < 1 ? `${s*100}p` : `£${s}`;
+    btn.className = 'stake-btn' + (s === stake ? ' active' : '');
+    btn.textContent = label; btn.dataset.stake = String(s);
     wrap.appendChild(btn);
   });
   wrap.addEventListener('click', e => {
@@ -376,30 +386,44 @@ function buildStakeButtons() {
     wrap.querySelectorAll('.stake-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     stake = parseFloat(btn.dataset.stake);
+    refreshBetInfo();
   });
+}
+
+function refreshBetInfo() {
+  const n   = selNums.size;
+  const tot = totalBet();
+  document.getElementById('bet-total').textContent =
+    n === 0 ? '£0.00' : `£${tot.toFixed(2)} (${n} number${n>1?'s':''})`;
+  const can = canAfford();
+  document.getElementById('drop-btn').disabled  = !can || state > S.BETTING;
+  document.getElementById('clear-btn').disabled = n === 0 || state > S.BETTING;
 }
 
 function setInteractive(on) {
   document.querySelectorAll('.bet-num,.stake-btn').forEach(b => { b.disabled = !on; });
-  if (!on) document.getElementById('drop-btn').disabled = true;
+  if (!on) {
+    document.getElementById('drop-btn').disabled  = true;
+    document.getElementById('clear-btn').disabled = true;
+  }
 }
-function setDropEnabled(on) { document.getElementById('drop-btn').disabled = !on; }
 function updateBalance() {
   document.getElementById('balance-val').textContent = balance.toFixed(2);
   document.getElementById('lastwin-val').textContent = lastWin.toFixed(2);
 }
 function showStatus(msg) { document.getElementById('status-msg').textContent = msg; }
 
-// ─── GAME STATE MACHINE ──────────────────────────────────────────────────────
+// ─── GAME STATE ───────────────────────────────────────────────────────────────
 const S = { IDLE:0, BETTING:1, DROPPING:2, CASCADE:3, PAYOUT:4 };
 let state = S.IDLE;
 
-let balls      = [];
-let slotCounts = new Array(37).fill(0);
+let balls         = [];
+let slotCounts    = new Array(37).fill(0);
 let cascadeDropped = 0;
 let cascadeTimer   = null;
 let payoutShown    = false;
 let winGlow        = 0;
+let winningNum     = null; // the specific number that was hit in stage 1
 let overlayText    = null;
 let payoutPopup    = null;
 
@@ -407,20 +431,35 @@ function setState(s) {
   state = s;
   const on = (s === S.IDLE || s === S.BETTING);
   setInteractive(on);
-  if (s === S.BETTING) setDropEnabled(selNum !== null);
+  if (on) refreshBetInfo();
   updateBalance();
 }
 
-function onSelectNumber(num) {
+function onToggleNumber(num) {
   if (state !== S.IDLE && state !== S.BETTING) return;
-  selNum = num;
-  if (state === S.IDLE) setState(S.BETTING);
-  else setDropEnabled(true);
+  if (selNums.has(num)) {
+    selNums.delete(num);
+    document.querySelector(`[data-num="${num}"]`).classList.remove('selected');
+  } else {
+    selNums.add(num);
+    document.querySelector(`[data-num="${num}"]`).classList.add('selected');
+  }
+  if (state === S.IDLE && selNums.size > 0) setState(S.BETTING);
+  else if (selNums.size === 0) setState(S.IDLE);
+  else refreshBetInfo();
+}
+
+function onClear() {
+  if (state !== S.IDLE && state !== S.BETTING) return;
+  selNums.clear();
+  document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
+  setState(S.IDLE);
+  showStatus('Select numbers and drop!');
 }
 
 function onDrop() {
-  if (state !== S.BETTING || selNum === null) return;
-  if (!placeBet()) { showStatus('Insufficient balance!'); return; }
+  if (state !== S.BETTING || !canAfford()) return;
+  if (!placeBets()) { showStatus('Insufficient balance!'); return; }
   resetRound();
   setState(S.DROPPING);
   spawnBall(false);
@@ -430,11 +469,12 @@ function resetRound() {
   clearTimeout(cascadeTimer);
   balls = []; slotCounts = new Array(37).fill(0);
   cascadeDropped = 0; payoutShown = false;
-  winGlow = 0; overlayText = null; payoutPopup = null;
+  winGlow = 0; winningNum = null; overlayText = null; payoutPopup = null;
 }
 
 function spawnBall(isCascade) {
-  const x = 60 + Math.random() * (CW - 120);
+  // Drop from the top pin area, random X within triangle spread
+  const x = (CW/2 - 30) + Math.random() * 60;
   const b = new PhysicsBall(x, GRID_TOP - 14, BALL_R);
   b.isCascade = isCascade;
   balls.push(b);
@@ -446,7 +486,6 @@ function startCascade() {
   setState(S.CASCADE); showStatus('30 balls dropping…');
   cascadeDropped = 0; payoutShown = false;
   dropNextCascade();
-  // safety timeout
   setTimeout(() => {
     if (state === S.CASCADE && !payoutShown) { payoutShown = true; showPayout(); }
   }, CONFIG.gameplay.stage2BallCount * CONFIG.gameplay.stage2BallInterval + 12000);
@@ -477,8 +516,9 @@ function checkStage1() {
     if (ball.processed || !ball.settled || ball.isCascade) continue;
     ball.processed = true;
     const landed = SLOT_NUMBERS[ball.slotIndex];
-    if (landed === selNum) {
-      winGlow = 1;
+    if (selNums.has(landed)) {
+      winningNum = landed;
+      winGlow    = 1;
       setState(S.PAYOUT); // lock input during pause
       setTimeout(startCascade, 950);
     } else {
@@ -486,9 +526,9 @@ function checkStage1() {
       setState(S.PAYOUT);
       setTimeout(() => {
         overlayText = null; balls = [];
-        document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
-        selNum = null;
-        setState(S.IDLE); showStatus('Select a number and drop!');
+        setState(S.BETTING); // keep numbers selected for next drop
+        showStatus('Miss! Drop again or change numbers.');
+        refreshBetInfo();
       }, 1600);
     }
   }
@@ -504,22 +544,22 @@ function checkCascadeComplete() {
 }
 
 function showPayout() {
-  const winSlot    = NUMBER_TO_SLOT[selNum];
+  const winSlot    = NUMBER_TO_SLOT[winningNum];
   const ballsInWin = slotCounts[winSlot] || 0;
   const { mult, win } = calcPayout(ballsInWin);
   winGlow = 1; payoutPopup = { mult, win };
   setState(S.PAYOUT);
-  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${selNum} — ${mult}× — £${win.toFixed(2)}`);
+  showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}× — £${win.toFixed(2)}`);
   setTimeout(() => {
     payoutPopup = null; winGlow = 0; balls = [];
-    slotCounts = new Array(37).fill(0);
-    document.querySelectorAll('.bet-num.selected').forEach(b => b.classList.remove('selected'));
-    selNum = null;
-    setState(S.IDLE); showStatus('Select a number and drop!');
+    slotCounts  = new Array(37).fill(0); winningNum = null;
+    setState(S.BETTING); // keep number selections for next round
+    refreshBetInfo();
+    showStatus('Drop again or change numbers!');
   }, 4200);
 }
 
-// ─── GAME LOOP ───────────────────────────────────────────────────────────────
+// ─── GAME LOOP ────────────────────────────────────────────────────────────────
 function gameLoop() {
   stepPhysics(balls, PINS, RECTS);
   checkSettlement();
@@ -527,15 +567,17 @@ function gameLoop() {
   if (state === S.CASCADE) checkCascadeComplete();
   if (state === S.CASCADE && winGlow > 0)
     winGlow = 0.55 + 0.45 * Math.abs(Math.sin(Date.now() * 0.0045));
-  renderFrame(balls, slotCounts, winGlow, overlayText, payoutPopup);
+  renderFrame(balls, slotCounts, winningNum, winGlow, overlayText, payoutPopup);
   requestAnimationFrame(gameLoop);
 }
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 buildBetTable();
 buildStakeButtons();
 document.getElementById('drop-btn').addEventListener('click', onDrop);
+document.getElementById('clear-btn').addEventListener('click', onClear);
 setState(S.IDLE);
+showStatus('Select numbers and drop!');
 requestAnimationFrame(gameLoop);
 </script>
 </body>
