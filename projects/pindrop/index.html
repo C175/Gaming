@@ -98,6 +98,11 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   transition:border-color .12s,color .12s,background .12s}
 #clear-btn:hover:not(:disabled){border-color:#ff7777;color:#ff9999;background:rgba(255,50,50,.12)}
 #clear-btn:disabled{opacity:.28;cursor:not-allowed}
+#rebet-btn{padding:5px 10px;background:rgba(240,192,64,.07);border:1px solid rgba(240,192,64,.28);
+  border-radius:4px;color:#c8a030;font-size:11px;font-family:'Exo 2',sans-serif;cursor:pointer;white-space:nowrap;
+  transition:border-color .12s,color .12s,background .12s}
+#rebet-btn:hover:not(:disabled){border-color:#f0c040;color:#f0c040;background:rgba(240,192,64,.14)}
+#rebet-btn:disabled{opacity:.28;cursor:not-allowed}
 /* Heat meter */
 #heat-wrap{display:flex;align-items:center;gap:6px;margin-left:4px}
 #heat-label{font-size:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px;color:#554422;
@@ -216,6 +221,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
   <div id="controls">
     <div id="stake-area"><span>Stake:</span><div id="stake-btns"></div></div>
     <div id="bet-info">Bet: <span id="bet-total">£0.00</span></div>
+    <button id="rebet-btn" disabled>↩ Rebet</button>
     <button id="clear-btn" disabled>Clear</button>
     <button id="drop-btn" disabled>DROP BALL</button>
     <div id="autoplay-area">
@@ -1011,7 +1017,13 @@ function setInteractive(on){
     b.disabled=!on;
     b.classList.toggle('locked',!on);
   });
-  if(!on){document.getElementById('drop-btn').disabled=true;document.getElementById('clear-btn').disabled=true;}
+  if(!on){
+    document.getElementById('drop-btn').disabled=true;
+    document.getElementById('clear-btn').disabled=true;
+    document.getElementById('rebet-btn').disabled=true;
+  } else if(lastBet.nums.size>0){
+    document.getElementById('rebet-btn').disabled=false;
+  }
 }
 function updateBalance(){
   document.getElementById('balance-val').textContent=balance.toFixed(2);
@@ -1053,9 +1065,30 @@ function onClear(){
   setState(S.IDLE);showStatus('Select numbers and drop!');
 }
 
+function onRebet(){
+  if(state!==S.IDLE&&state!==S.BETTING)return;
+  if(!lastBet.nums.size)return;
+  // Clear current selection first
+  selNums.clear();
+  document.querySelectorAll('.bet-num.selected').forEach(b=>b.classList.remove('selected'));
+  // Restore last bet
+  lastBet.nums.forEach(n=>{
+    selNums.add(n);
+    document.querySelector(`[data-num="${n}"]`)?.classList.add('selected');
+  });
+  stake=lastBet.stake;
+  document.querySelectorAll('.stake-btn').forEach(b=>{
+    b.classList.toggle('active',parseFloat(b.dataset.stake)===stake);
+  });
+  setState(S.BETTING);
+  showStatus(`Rebet: £${(stake*selNums.size).toFixed(2)} on ${Array.from(lastBet.nums).sort((a,b)=>a-b).join(', ')}`);
+}
+
 function onDrop(){
   if(state!==S.BETTING||!canAfford())return;
   if(!placeBets()){showStatus('Insufficient balance!');return;}
+  lastBet={nums:new Set(selNums),stake};
+  document.getElementById('rebet-btn').disabled=false;
   resetRound();
 
   // Pick 3 random lightning numbers (can include selected numbers for extra drama)
@@ -1247,6 +1280,7 @@ let roundNumber=0;
 
 // ─── AUTOPLAY ─────────────────────────────────────────────────────────────────
 let autoplay={active:false,remaining:0,rounds:10,savedNums:new Set(),savedStake:1};
+let lastBet={nums:new Set(),stake:1};
 
 function apSelectRounds(n){
   autoplay.rounds=n;
@@ -1344,6 +1378,7 @@ function gameLoop(){
 buildBetTable();buildStakeButtons();
 document.getElementById('drop-btn').addEventListener('click',onDrop);
 document.getElementById('clear-btn').addEventListener('click',onClear);
+document.getElementById('rebet-btn').addEventListener('click',onRebet);
 // Autoplay controls
 apSelectRounds(10); // default selection
 document.getElementById('autoplay-btns').addEventListener('click',e=>{
