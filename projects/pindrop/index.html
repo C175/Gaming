@@ -1004,10 +1004,7 @@ function checkStage1(){
     } else {
       consecutiveMisses++;updateHeatMeter();
       showMiss=true;setState(S.PAYOUT);
-      setTimeout(()=>{
-        showMiss=false;balls=[];
-        setState(S.BETTING);showStatus('Miss! Drop again or change numbers.');refreshBetInfo();
-      },1600);
+      setTimeout(()=>{ showMiss=false; fullReset(); },3000);
     }
   }
 }
@@ -1043,10 +1040,23 @@ function showPayout(){
   const bonusTags=(isHot?' 🔥':'')+(wide?' ◀▶':'')+(lightMult>1?` ⚡${lightMult}×`:'');
   showStatus(`${ballsInWin} ball${ballsInWin!==1?'s':''} in slot ${winningNum} — ${mult}×${bonusTags} — £${win.toFixed(2)}`);
 
-  setTimeout(()=>{
-    winGlow=0;balls=[];slotCounts=new Array(37).fill(0);winningNum=null;shakeDecay=0;
-    setState(S.BETTING);refreshBetInfo();showStatus('Drop again or change numbers!');
-  },4500);
+  setTimeout(fullReset, 3000);
+}
+
+function fullReset(){
+  // Clear all balls and visual state
+  winGlow=0;balls=[];slotCounts=new Array(37).fill(0);winningNum=null;shakeDecay=0;showMiss=false;
+  // Clear selections
+  selNums.clear();
+  document.querySelectorAll('.bet-num.selected').forEach(b=>b.classList.remove('selected'));
+  // Clear lightning multipliers
+  lightningNums.clear();clearLightningUI();
+  // Clear hot highlights
+  hotNums.forEach(n=>document.querySelector(`[data-num="${n}"]`)?.classList.remove('hot'));
+  hotNums.clear();hotExpiry=0;
+  document.getElementById('hot-ref').style.display='none';
+  setState(S.IDLE);
+  showStatus('Select numbers and drop!');
 }
 
 // ─── GAME LOOP ────────────────────────────────────────────────────────────────
