@@ -544,15 +544,13 @@ const Sound=(()=>{
   let lastTick=0;
   function tick(speed){
     const now=Date.now();
-    if(now-lastTick<55)return; // max ~18 ticks/s to avoid mud
+    if(now-lastTick<55)return;
     lastTick=now;
     const c=init(),t=c.currentTime;
-    // Short triangle ping — pitch scales with ball speed
     const freq=420+Math.min(speed,12)*28;
     const osc=c.createOscillator();osc.type='triangle';osc.frequency.value=freq;
     const g=c.createGain();g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.07);
     osc.connect(g);g.connect(c.destination);osc.start(t);osc.stop(t+0.07);
-    // Subtle body knock
     const buf=mkNoise(c,0.05),d2=buf.getChannelData(0);
     for(let i=0;i<d2.length;i++)d2[i]*=Math.exp(-i/(d2.length*0.15));
     const src=c.createBufferSource();src.buffer=buf;
@@ -560,7 +558,79 @@ const Sound=(()=>{
     const g2=c.createGain();g2.gain.setValueAtTime(0.1,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.05);
     src.connect(lp);lp.connect(g2);g2.connect(c.destination);src.start(t);src.stop(t+0.05);
   }
-  return{zap,thunder,whoosh,win,tick};
+
+  // Ball settling into a slot — soft low thud
+  let lastLand=0;
+  function land(){
+    const now=Date.now();
+    if(now-lastLand<40)return; // cap during cascade
+    lastLand=now;
+    const c=init(),t=c.currentTime;
+    // Thud: pitched noise decay
+    const buf=mkNoise(c,0.12),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]*=Math.exp(-i/(d.length*0.12));
+    const src=c.createBufferSource();src.buffer=buf;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=320;
+    const g=c.createGain();g.gain.setValueAtTime(0.28,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+    src.connect(lp);lp.connect(g);g.connect(c.destination);src.start(t);src.stop(t+0.12);
+    // Subtle mid click on top
+    const osc=c.createOscillator();osc.type='sine';osc.frequency.value=180;
+    const og=c.createGain();og.gain.setValueAtTime(0.12,t);og.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+    osc.connect(og);og.connect(c.destination);osc.start(t);osc.stop(t+0.06);
+  }
+
+  // Stage 1 hit — rising pinball activation cascade
+  function activate(){
+    const c=init(),t=c.currentTime;
+    // Rapid ascending tone burst — "da-da-da-DAAA"
+    [0,5,9,14,19].forEach((semi,i)=>{
+      const freq=330*Math.pow(2,semi/12);
+      const osc=c.createOscillator();osc.type='square';osc.frequency.value=freq;
+      const g=c.createGain();
+      const vol=i===4?0.22:0.12; // final note louder
+      const dur=i===4?0.18:0.08;
+      g.gain.setValueAtTime(vol,t+i*0.07);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.07+dur);
+      osc.connect(g);g.connect(c.destination);osc.start(t+i*0.07);osc.stop(t+i*0.07+dur);
+    });
+    // Underlaying swell
+    const osc2=c.createOscillator();osc2.type='sawtooth';
+    osc2.frequency.setValueAtTime(110,t);osc2.frequency.exponentialRampToValueAtTime(440,t+0.45);
+    const g2=c.createGain();g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(0.15,t+0.1);
+    g2.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1200;
+    osc2.connect(lp);lp.connect(g2);g2.connect(c.destination);osc2.start(t);osc2.stop(t+0.5);
+  }
+
+  // Stage 2 start — dramatic synth swell, scales with tier
+  function stage2(tier){
+    const c=init(),t=c.currentTime;
+    const isEpic=tier==='epic', isBig=tier==='big';
+    // Noise whomp
+    const buf=mkNoise(c,1.2),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]*=Math.exp(-i/(d.length*0.25))*(0.6+0.4*Math.sin(i*0.005));
+    const src=c.createBufferSource();src.buffer=buf;
+    const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=isEpic?600:350;
+    const vol=isEpic?0.65:isBig?0.5:0.38;
+    const g=c.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(0.001,t+1.2);
+    src.connect(lp);lp.connect(g);g.connect(c.destination);src.start(t);src.stop(t+1.2);
+    // Rising chord arpeggio
+    const notes=isEpic?[55,110,165,220,330]:[110,165,220];
+    notes.forEach((freq,i)=>{
+      const osc=c.createOscillator();osc.type=isEpic?'sawtooth':'triangle';osc.frequency.value=freq;
+      const og=c.createGain();
+      og.gain.setValueAtTime(0,t+i*0.09);og.gain.linearRampToValueAtTime(isEpic?0.18:0.12,t+i*0.09+0.05);
+      og.gain.exponentialRampToValueAtTime(0.001,t+i*0.09+0.5);
+      osc.connect(og);og.connect(c.destination);osc.start(t+i*0.09);osc.stop(t+i*0.09+0.5);
+    });
+    // Epic only: deep sub thud
+    if(isEpic){
+      const sub=c.createOscillator();sub.type='sine';sub.frequency.setValueAtTime(60,t);sub.frequency.exponentialRampToValueAtTime(30,t+0.3);
+      const sg=c.createGain();sg.gain.setValueAtTime(0.5,t);sg.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      sub.connect(sg);sg.connect(c.destination);sub.start(t);sub.stop(t+0.35);
+    }
+  }
+
+  return{zap,thunder,whoosh,win,tick,land,activate,stage2};
 })();
 
 // ─── RENDERER ────────────────────────────────────────────────────────────────
@@ -1015,6 +1085,7 @@ function startCascade(){
 
   if (tier==='epic'){shakeDecay=1;}
   else if (tier==='big'){flashAlpha=Math.max(flashAlpha,0.4);}
+  Sound.stage2(tier);
 
   setTimeout(()=>{
     setState(S.CASCADE);showStatus('50 balls dropping…');
@@ -1039,6 +1110,7 @@ function checkSettlement(){
     if(ball.y>SLOT_TOP+22){
       ball.settled=true;ball.slotIndex=getSlotIndex(ball.x);
       if(ball.isCascade)slotCounts[ball.slotIndex]++;
+      Sound.land();
       setTimeout(()=>{ball.removed=true;ball.active=false;},600);
     }
   }
@@ -1052,6 +1124,7 @@ function checkStage1(){
     if(selNums.has(landed)){
       winningNum=landed;winGlow=1;flashAlpha=0.7;
       consecutiveMisses=0;updateHeatMeter();
+      Sound.activate();
       setState(S.PAYOUT);
       setTimeout(startCascade,400);
     } else {
