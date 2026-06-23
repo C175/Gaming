@@ -149,7 +149,7 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
 const CONFIG = {
   branding:  { primaryColour: '#f0c040', backgroundColor: '#0b0b1c' },
   gameplay:  { stakeOptions: [0.20,0.50,1,2,5,10], startingBalance: 100,
-               stage2BallCount: 30, stage2BallInterval: 200 },
+               stage2BallCount: 50, stage2BallInterval: 200 },
   rtp:       { payoutTable: { 0:65,1:15,2:20,3:30,4:50,5:100 } },
   // Hot numbers: declared promotional feature — activates 1-2 numbers for 12s
   // every 45-75s. Multiplies payout by 1.5× if bet number is hot when hit.
@@ -707,7 +707,7 @@ function startCascade(){
   else if (tier==='big'){flashAlpha=Math.max(flashAlpha,0.4);}
 
   setTimeout(()=>{
-    setState(S.CASCADE);showStatus('30 balls dropping…');
+    setState(S.CASCADE);showStatus('50 balls dropping…');
     cascadeDropped=0;payoutShown=false;
     dropNextCascade();
     setTimeout(()=>{
