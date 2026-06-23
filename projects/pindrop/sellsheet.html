@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PinDrop — B2B Sell Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  body{
+    font-family:'Exo 2',Arial,sans-serif;
+    background:#fff;
+    color:#1a1a2e;
+    width:210mm;
+    min-height:297mm;
+    margin:0 auto;
+    padding:0;
+  }
+
+  /* ── Page shell ── */
+  .page{
+    width:210mm;
+    min-height:297mm;
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+  }
+
+  /* ── Header band ── */
+  .header{
+    background:linear-gradient(135deg,#0b0b1c 0%,#111130 60%,#1a1040 100%);
+    padding:28px 36px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+  }
+  .logo{
+    font-family:'Orbitron',sans-serif;
+    font-size:38px;
+    font-weight:900;
+    letter-spacing:8px;
+    background:linear-gradient(90deg,#fff 0%,#f0c040 30%,#fffbe0 55%,#f0c040 80%,#fff 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .tagline{
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:#667;
+    margin-top:4px;
+    font-family:'Orbitron',sans-serif;
+  }
+  .badge{
+    background:rgba(240,192,64,0.12);
+    border:1px solid rgba(240,192,64,0.4);
+    border-radius:6px;
+    padding:10px 18px;
+    text-align:center;
+    color:#f0c040;
+    font-size:11px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .badge strong{display:block;font-size:20px;font-family:'Orbitron',sans-serif;margin-bottom:2px}
+
+  /* ── Body ── */
+  .body{
+    padding:28px 36px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  /* ── Concept band ── */
+  .concept{
+    background:linear-gradient(135deg,#f8f4e8,#fff8e0);
+    border-left:4px solid #f0c040;
+    border-radius:4px;
+    padding:14px 18px;
+    font-size:14px;
+    line-height:1.6;
+    color:#2a2510;
+  }
+  .concept strong{color:#b8860b;font-size:16px;display:block;margin-bottom:4px}
+
+  /* ── Two-col grid ── */
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+  .card{
+    border:1px solid #e8e8f0;
+    border-radius:6px;
+    padding:16px 18px;
+  }
+  .card h3{
+    font-family:'Orbitron',sans-serif;
+    font-size:10px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#888;
+    margin-bottom:10px;
+    border-bottom:1px solid #f0f0f8;
+    padding-bottom:6px;
+  }
+  .card ul{list-style:none;padding:0}
+  .card ul li{
+    font-size:12px;
+    line-height:1.7;
+    color:#333;
+    padding-left:14px;
+    position:relative;
+  }
+  .card ul li::before{content:'•';position:absolute;left:0;color:#f0c040;font-weight:900}
+
+  /* ── Mechanics flow ── */
+  .flow{display:flex;gap:0;align-items:stretch}
+  .flow-step{
+    flex:1;
+    text-align:center;
+    padding:12px 8px;
+    background:#f9f9fc;
+    border:1px solid #e8e8f0;
+    position:relative;
+  }
+  .flow-step:not(:last-child)::after{
+    content:'▶';
+    position:absolute;
+    right:-10px;top:50%;transform:translateY(-50%);
+    font-size:12px;color:#ccc;
+    z-index:1;
+  }
+  .flow-step .step-num{
+    font-family:'Orbitron',sans-serif;
+    font-size:18px;font-weight:900;
+    color:#f0c040;display:block;margin-bottom:4px;
+  }
+  .flow-step .step-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#555}
+  .flow-step .step-desc{font-size:9px;color:#888;margin-top:3px;line-height:1.4}
+
+  /* ── Payout table ── */
+  .payout-table{width:100%;border-collapse:collapse;font-size:12px}
+  .payout-table th{
+    background:#0b0b1c;color:#f0c040;
+    font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;
+    padding:7px 10px;text-align:left;
+  }
+  .payout-table td{padding:6px 10px;border-bottom:1px solid #f0f0f8;color:#333}
+  .payout-table tr:nth-child(even) td{background:#fafafe}
+  .payout-table .mult{font-weight:900;color:#b8860b;font-family:'Orbitron',sans-serif;font-size:11px}
+  .payout-table .bonus{font-size:10px;color:#888}
+
+  /* ── Multiplier features ── */
+  .features-row{display:flex;gap:12px}
+  .feat{
+    flex:1;border-radius:6px;padding:12px 14px;
+    border:1px solid;text-align:center;
+  }
+  .feat.gold{border-color:#d4a017;background:#fffbf0}
+  .feat.blue{border-color:#3a7bd5;background:#f0f4ff}
+  .feat.orange{border-color:#d4600a;background:#fff4f0}
+  .feat .feat-icon{font-size:20px;margin-bottom:4px}
+  .feat .feat-name{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;
+    text-transform:uppercase;font-weight:900;margin-bottom:3px}
+  .feat.gold .feat-name{color:#b8860b}
+  .feat.blue .feat-name{color:#3a7bd5}
+  .feat.orange .feat-name{color:#c05000}
+  .feat .feat-desc{font-size:10px;color:#555;line-height:1.4}
+
+  /* ── Tech & integration ── */
+  .tech-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  .tech-item{text-align:center;padding:10px;background:#f8f8fc;border-radius:4px}
+  .tech-item .ti-val{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;color:#0b0b1c}
+  .tech-item .ti-label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+  /* ── RTP callout ── */
+  .rtp-row{display:flex;gap:12px;align-items:stretch}
+  .rtp-box{
+    background:linear-gradient(135deg,#0b0b1c,#1a1040);
+    color:#fff;border-radius:6px;padding:14px 20px;
+    display:flex;flex-direction:column;justify-content:center;
+    text-align:center;min-width:120px;
+  }
+  .rtp-box .rtp-val{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:#f0c040}
+  .rtp-box .rtp-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-top:2px}
+  .rtp-notes{flex:1;font-size:11px;line-height:1.7;color:#444;display:flex;flex-direction:column;justify-content:center}
+  .rtp-notes li{list-style:none;padding-left:14px;position:relative}
+  .rtp-notes li::before{content:'✓';position:absolute;left:0;color:#2a8a4a;font-weight:900}
+
+  /* ── Footer ── */
+  .footer{
+    background:#0b0b1c;
+    padding:14px 36px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+  }
+  .footer-logo{
+    font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;
+    letter-spacing:4px;color:#f0c040;
+  }
+  .footer-contact{font-size:11px;color:#556;text-align:right;line-height:1.6}
+  .footer-note{font-size:9px;color:#334;text-align:center;flex:1}
+
+  /* ── Print ── */
+  @media print{
+    body{margin:0;width:210mm}
+    .page{page-break-after:avoid}
+    @page{size:A4;margin:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="logo">PINDROP</div>
+      <div class="tagline">White-Label Bagatelle Casino Game</div>
+    </div>
+    <div style="display:flex;gap:14px">
+      <div class="badge"><strong>94–96%</strong>Declared RTP</div>
+      <div class="badge"><strong>B2B</strong>White Label</div>
+      <div class="badge"><strong>HTML5</strong>No Install</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <!-- Concept -->
+    <div class="concept">
+      <strong>Two-stage bagatelle meets roulette odds</strong>
+      Player picks a number, drops a ball through a triangle pin grid. A hit triggers a 50-ball cascade — the more balls land in the player's slot, the bigger the multiplier. Clean, fast rounds with stacked bonus features keep session times high and churn low.
+    </div>
+
+    <!-- Game flow -->
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:8px">How It Plays</div>
+      <div class="flow">
+        <div class="flow-step">
+          <span class="step-num">⚡</span>
+          <div class="step-label">Multipliers</div>
+          <div class="step-desc">3 random numbers get 2–5× bolt multipliers before each drop</div>
+        </div>
+        <div class="flow-step">
+          <span class="step-num">1</span>
+          <div class="step-label">Bet</div>
+          <div class="step-desc">Pick 1–36 numbers, set stake 20p–£10</div>
+        </div>
+        <div class="flow-step">
+          <span class="step-num">2</span>
+          <div class="step-label">Stage 1</div>
+          <div class="step-desc">Ball drops through 10-row triangle pin grid</div>
+        </div>
+        <div class="flow-step">
+          <span class="step-num">3</span>
+          <div class="step-label">Stage 2</div>
+          <div class="step-desc">HIT triggers 50-ball cascade through the grid</div>
+        </div>
+        <div class="flow-step">
+          <span class="step-num">4</span>
+          <div class="step-label">Payout</div>
+          <div class="step-desc">Stake × multiplier based on balls in player's slot</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payout + Features -->
+    <div class="two-col">
+
+      <!-- Payout table -->
+      <div class="card" style="padding:0;overflow:hidden">
+        <h3 style="padding:10px 14px;margin:0">Stage 2 Payout Table</h3>
+        <table class="payout-table">
+          <thead>
+            <tr><th>Balls in slot</th><th>Multiplier</th><th>Bonus stacking</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0 balls</td><td class="mult">65×</td><td class="bonus">Base</td></tr>
+            <tr><td>1 ball</td><td class="mult">15×</td><td class="bonus">Base</td></tr>
+            <tr><td>2 balls</td><td class="mult">20×</td><td class="bonus">+ Wide ×1.5</td></tr>
+            <tr><td>3 balls</td><td class="mult">30×</td><td class="bonus">+ Hot ×1.5</td></tr>
+            <tr><td>4 balls</td><td class="mult">50×</td><td class="bonus">+ Bolt ×2–5</td></tr>
+            <tr><td>5+ balls</td><td class="mult">100×</td><td class="bonus">All stackable</td></tr>
+          </tbody>
+        </table>
+        <div style="padding:8px 14px;font-size:10px;color:#888;background:#fafafe">
+          Multipliers stack: e.g. 5-ball hit on a Hot + Bolt 5× slot = <strong style="color:#b8860b">750×</strong>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="card">
+        <h3>Platform Features</h3>
+        <ul>
+          <li>Multi-number betting — players cover multiple slots per spin</li>
+          <li>Autoplay — 5, 10, 25 or 50 round auto-sessions</li>
+          <li>Round history — last 10 results with bonus tags</li>
+          <li>Heat meter — pseudo-random nudge after cold streaks</li>
+          <li>Stake-linked drama — escalating Stage 2 animation at £5 / £10</li>
+          <li>Synthesised audio — all sounds via Web Audio API, no assets</li>
+          <li>Wide-slot bonus — outer slots pay 1.5× to reward bold bets</li>
+          <li>Full reset each round — no sticky state, clean every spin</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Multiplier bonus features -->
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:8px">Stackable Bonus Multipliers</div>
+      <div class="features-row">
+        <div class="feat orange">
+          <div class="feat-icon">⚡</div>
+          <div class="feat-name">Bolt Multiplier</div>
+          <div class="feat-desc">3 random numbers struck by lightning before each drop, each awarded 2–5× multiplier. Refreshed every round.</div>
+        </div>
+        <div class="feat orange">
+          <div class="feat-icon">🔥</div>
+          <div class="feat-name">Hot Numbers</div>
+          <div class="feat-desc">1–2 numbers activate every 45–75s for 12s with a 1.5× bonus — declared promotional feature, keeps sessions active.</div>
+        </div>
+        <div class="feat blue">
+          <div class="feat-icon">◀▶</div>
+          <div class="feat-name">Wide Slot Bonus</div>
+          <div class="feat-desc">Outer 14 slots pay 1.5× — compensates for lower ball probability on edge slots, rewarding bold number picks.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RTP & compliance -->
+    <div class="rtp-row">
+      <div class="rtp-box">
+        <div class="rtp-val">94–96%</div>
+        <div class="rtp-label">Declared RTP</div>
+        <div style="margin-top:8px;font-size:9px;color:#667">Configurable per operator via config.js</div>
+      </div>
+      <div class="rtp-notes">
+        <ul>
+          <li>RTP configurable per licensee via white-label config — no rebuild required</li>
+          <li>Physics-based ball drop with per-pin restitution variance — defensible RNG</li>
+          <li>Ready for GLI / BMM / eCOGRA RTP audit</li>
+          <li>Responsible gambling hooks available (session timer, reality check, self-exclusion)</li>
+          <li>Compliant with UK GC, MGA, and Curaçao operator requirements</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tech & integration -->
+    <div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-bottom:8px">Integration</div>
+      <div class="tech-row">
+        <div class="tech-item">
+          <div class="ti-val">1 File</div>
+          <div class="ti-label">Single self-contained HTML — drop into any platform</div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-val">iframe</div>
+          <div class="ti-label">Embed anywhere with one line, no SDK required</div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-val">0 deps</div>
+          <div class="ti-label">No npm, no build step, no CDN — works offline</div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-val">CSS + JS</div>
+          <div class="ti-label">Branding — colours, logo, name via config.js</div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-val">£0.20–£10</div>
+          <div class="ti-label">Stake range — configurable per operator</div>
+        </div>
+        <div class="tech-item">
+          <div class="ti-val">Chrome · FF · Safari · Edge</div>
+          <div class="ti-label">Browser support — mobile and desktop</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-logo">PINDROP</div>
+    <div class="footer-note" style="color:#334;font-size:9px">
+      Proprietary &amp; Confidential — This document is for licensed operator discussion only.<br>
+      All RTP figures are declared estimates pending independent certification.
+    </div>
+    <div class="footer-contact">
+      <div style="color:#f0c040;font-family:'Orbitron',sans-serif;font-size:10px;margin-bottom:3px">LICENSING ENQUIRIES</div>
+      <div style="color:#556;font-size:10px">connormcgrady@hotmail.co.uk</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
