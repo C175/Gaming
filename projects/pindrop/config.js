@@ -7,7 +7,7 @@ const CONFIG = {
   gameplay: {
     stakeOptions:       [1, 2, 5, 10],
     startingBalance:    100,
-    stage2BallCount:    30,
+    stage2BallCount:    50,
     stage2BallInterval: 200, // ms between cascade balls
   },
   rtp: {
