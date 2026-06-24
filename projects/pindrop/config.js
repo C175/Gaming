@@ -11,7 +11,7 @@ const CONFIG = {
     stage2BallInterval: 200, // ms between cascade balls
   },
   rtp: {
-    payoutTable: { 0: 70, 1: 15, 2: 20, 3: 30, 4: 50, 5: 100 },
+    payoutTable: { 0: 65, 1: 22, 2: 20, 3: 30, 4: 50, 5: 100 },
   },
   physics: {
     pinRows:      8,
