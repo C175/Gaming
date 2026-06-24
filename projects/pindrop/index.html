@@ -669,7 +669,22 @@ const Sound=(()=>{
     }
   }
 
-  return{zap,thunder,whoosh,win,tick,land,activate,stage2};
+  function click(on){
+    const c=init(),t=c.currentTime;
+    const freq=on?520:380;
+    const osc=c.createOscillator();osc.type='sine';osc.frequency.value=freq;
+    const g=c.createGain();g.gain.setValueAtTime(0.1,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+    osc.connect(g);g.connect(c.destination);osc.start(t);osc.stop(t+0.06);
+    // Subtle noise transient for tactile feel
+    const buf=mkNoise(c,0.04),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]*=Math.exp(-i/(d.length*0.1));
+    const src=c.createBufferSource();src.buffer=buf;
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;
+    const g2=c.createGain();g2.gain.setValueAtTime(0.06,t);g2.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+    src.connect(hp);hp.connect(g2);g2.connect(c.destination);src.start(t);src.stop(t+0.04);
+  }
+
+  return{zap,thunder,whoosh,win,tick,land,activate,stage2,click};
 })();
 
 // ─── RENDERER ────────────────────────────────────────────────────────────────
@@ -1049,9 +1064,11 @@ function onToggleNumber(num){
   if(selNums.has(num)){
     selNums.delete(num);
     document.querySelector(`[data-num="${num}"]`).classList.remove('selected');
+    Sound.click(false);
   } else {
     selNums.add(num);
     document.querySelector(`[data-num="${num}"]`).classList.add('selected');
+    Sound.click(true);
   }
   if(state===S.IDLE&&selNums.size>0)setState(S.BETTING);
   else if(selNums.size===0)setState(S.IDLE);
