@@ -384,16 +384,17 @@ function clearLightningUI(){
   lightningOverlay.alpha=0;
 }
 
-function makeBolt(targetSlotX){
-  const x0=CW/2+(Math.random()-0.5)*140;
+function makeBolt(targetSlotX, jitterScale){
+  const jitter=jitterScale||100;
+  const x0=CW/2+(Math.random()-0.5)*180;
   const y0=-12;
-  const x1=targetSlotX+(Math.random()-0.5)*SLOT_W*0.6;
+  const x1=targetSlotX+(Math.random()-0.5)*SLOT_W*0.5;
   const y1=SLOT_TOP-4;
   const pts=[{x:x0,y:y0}];
-  const segs=11;
+  const segs=16;
   for(let i=1;i<segs;i++){
-    const t=i/segs, jitter=(1-t)*85*(Math.random()-0.5);
-    pts.push({x:x0+(x1-x0)*t+jitter, y:y0+(y1-y0)*t});
+    const t=i/segs, j=(1-t)*jitter*(Math.random()-0.5);
+    pts.push({x:x0+(x1-x0)*t+j, y:y0+(y1-y0)*t});
   }
   pts.push({x:x1,y:y1});
   return pts;
@@ -408,11 +409,14 @@ function fireBolt(num, mult){
     btn.classList.add('bolt-strike','bolt-lit');
   }
   const slotX=(NUMBER_TO_SLOT[num]+0.5)*SLOT_W;
-  canvasBolts.push({pts:makeBolt(slotX),born:performance.now()});
-  // Second fork 65ms later for forked-lightning feel
-  setTimeout(()=>canvasBolts.push({pts:makeBolt(slotX),born:performance.now()}),65);
-  boltFlash=0.7;
-  shakeDecay=Math.max(shakeDecay,0.55);
+  // Main bolt
+  canvasBolts.push({pts:makeBolt(slotX,110),born:performance.now(),thick:true});
+  // Two forks — slightly narrower jitter, staggered
+  setTimeout(()=>canvasBolts.push({pts:makeBolt(slotX,75),born:performance.now(),thick:false}),55);
+  setTimeout(()=>canvasBolts.push({pts:makeBolt(slotX,60),born:performance.now(),thick:false}),120);
+  // Cap flash at 0.35 — visible but not a strobe
+  boltFlash=Math.min(0.35,boltFlash+0.35);
+  shakeDecay=Math.max(shakeDecay,0.7);
   Sound.zap();
 }
 
@@ -834,23 +838,36 @@ function drawBoltFlash() {
 }
 function drawCanvasBolts(now) {
   for (const bolt of canvasBolts) {
-    const age=now-bolt.born, a=Math.max(0,1-age/380);
+    const life=bolt.thick?600:420;
+    const age=now-bolt.born, a=Math.max(0,1-age/life);
     if (a<=0) continue;
-    // Outer glow
-    ctx.save();ctx.globalAlpha=a*0.6;ctx.strokeStyle='rgba(140,200,255,0.5)';
-    ctx.lineWidth=9;ctx.shadowColor='#88ccff';ctx.shadowBlur=22;
+    ctx.save();
+    // Wide outer glow
+    ctx.globalAlpha=a*0.55;
+    ctx.strokeStyle='rgba(140,200,255,0.55)';
+    ctx.lineWidth=bolt.thick?18:10;
+    ctx.shadowColor='#88ccff';ctx.shadowBlur=bolt.thick?40:20;
     ctx.beginPath();ctx.moveTo(bolt.pts[0].x,bolt.pts[0].y);
     for (const p of bolt.pts) ctx.lineTo(p.x,p.y);
     ctx.stroke();
-    // Core white
-    ctx.globalAlpha=a;ctx.strokeStyle='#e8f4ff';ctx.lineWidth=2.5;ctx.shadowBlur=12;
+    // Mid colour band
+    ctx.globalAlpha=a*0.8;
+    ctx.strokeStyle='rgba(180,225,255,0.75)';
+    ctx.lineWidth=bolt.thick?7:3.5;ctx.shadowBlur=bolt.thick?20:10;
+    ctx.beginPath();ctx.moveTo(bolt.pts[0].x,bolt.pts[0].y);
+    for (const p of bolt.pts) ctx.lineTo(p.x,p.y);
+    ctx.stroke();
+    // Bright white core
+    ctx.globalAlpha=a;ctx.strokeStyle='#ffffff';
+    ctx.lineWidth=bolt.thick?2.5:1.5;ctx.shadowBlur=8;
     ctx.beginPath();ctx.moveTo(bolt.pts[0].x,bolt.pts[0].y);
     for (const p of bolt.pts) ctx.lineTo(p.x,p.y);
     ctx.stroke();
     ctx.restore();
   }
   for (let i=canvasBolts.length-1;i>=0;i--) {
-    if (performance.now()-canvasBolts[i].born>380) canvasBolts.splice(i,1);
+    const life=canvasBolts[i].thick?600:420;
+    if (performance.now()-canvasBolts[i].born>life) canvasBolts.splice(i,1);
   }
 }
 function drawLightningOverlay(now) {
