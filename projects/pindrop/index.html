@@ -1149,15 +1149,17 @@ function spawnBall(isCascade){
     const ROW3_R = CW/2 + PIN_SPACING_X; // 474
     x = ROW3_L + ((Math.random() + Math.random()) / 2) * (ROW3_R - ROW3_L);
   } else {
-    // Random drop across top third of board
-    x=150+Math.random()*500;
-    // Heat nudge: after enough misses, bias toward a selected number
+    // Stage 1 uses same bounds as cascade — outer slots get no spawn advantage
+    const ROW3_L = CW/2 - PIN_SPACING_X; // 326
+    const ROW3_R = CW/2 + PIN_SPACING_X; // 474
+    x = ROW3_L + Math.random() * (ROW3_R - ROW3_L);
+    // Heat nudge: after enough misses, bias toward a selected number (clamped to same bounds)
     const {nudgeStart,maxMisses}=CONFIG.heat;
     if (consecutiveMisses>=nudgeStart&&selNums.size>0) {
       const strength=Math.min(0.5,(consecutiveMisses-nudgeStart)/(maxMisses-nudgeStart)*0.5);
       const targets=Array.from(selNums);
       const target=targets[Math.floor(Math.random()*targets.length)];
-      const targetX=(NUMBER_TO_SLOT[target]+0.5)*SLOT_W;
+      const targetX=Math.max(ROW3_L,Math.min(ROW3_R,(NUMBER_TO_SLOT[target]+0.5)*SLOT_W));
       x=x+(targetX-x)*strength;
     }
   }
