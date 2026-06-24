@@ -1093,9 +1093,9 @@ function onDrop(){
   document.getElementById('rebet-btn').disabled=false;
   resetRound();
 
-  // Pick 3 random lightning numbers (can include selected numbers for extra drama)
+  // Pick 1 random lightning number
   const pool=Array.from({length:37},(_,i)=>i);
-  for(let i=0;i<3&&pool.length;i++){
+  for(let i=0;i<1&&pool.length;i++){
     const idx=Math.floor(Math.random()*pool.length);
     const num=pool.splice(idx,1)[0];
     const mult=2+Math.floor(Math.random()*4); // 2–5
