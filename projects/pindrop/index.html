@@ -700,6 +700,8 @@ fc.beginPath();fc.moveTo(20,0);fc.lineTo(0,20);fc.stroke();
 const feltPattern=ctx.createPattern(feltCanvas,'repeat');
 
 let flashAlpha=0, shakeX=0, shakeY=0, shakeDecay=0;
+let hotFlash=0; // orange flash — separate from flashAlpha so they don't fight
+let hotHitAnim={active:false,start:0}; // 🔥 HOT HIT overlay
 let boltFlash=0; // blue-white screen flash during lightning strikes
 let canvasBolts=[]; // [{pts,alpha,born}]
 let lightningOverlay={alpha:0,start:0}; // "⚡ LIGHTNING ⚡" canvas text
@@ -962,6 +964,34 @@ function drawMissOverlay(show) {
   ctx.restore();
 }
 
+function drawHotHitOverlay(now) {
+  if (!hotHitAnim.active) return;
+  const elapsed=now-hotHitAnim.start;
+  const dur=900;
+  if (elapsed>dur){ hotHitAnim.active=false; return; }
+  // Fade in fast (0–120ms), hold, fade out
+  const a = elapsed<120 ? elapsed/120
+           : elapsed>650 ? 1-(elapsed-650)/(dur-650)
+           : 1;
+  // Dark orange vignette
+  ctx.fillStyle=`rgba(180,60,0,${(a*0.28).toFixed(2)})`;
+  ctx.fillRect(0,0,CW,CH);
+  // Text
+  ctx.save();
+  ctx.textAlign='center';
+  const scale=elapsed<120?0.7+0.3*(elapsed/120):1;
+  ctx.translate(CW/2,CH/2+10);ctx.scale(scale,scale);
+  ctx.shadowColor='#ff6600';ctx.shadowBlur=50*a;
+  ctx.font='bold 58px "Orbitron",sans-serif';
+  ctx.fillStyle=`rgba(255,140,0,${a.toFixed(2)})`;
+  ctx.fillText('🔥 HOT HIT!',0,0);
+  ctx.shadowBlur=20*a;
+  ctx.font='bold 20px "Exo 2",sans-serif';
+  ctx.fillStyle=`rgba(255,200,80,${(a*0.85).toFixed(2)})`;
+  ctx.fillText('1.5× BONUS ACTIVE',0,38);
+  ctx.restore();
+}
+
 function renderFrame(balls,slotCounts,winningNum,winGlow,showMiss) {
   const now=performance.now();
   // Screen shake
@@ -971,9 +1001,11 @@ function renderFrame(balls,slotCounts,winningNum,winGlow,showMiss) {
     ctx.save();ctx.translate(shakeX,shakeY);
   }
   drawBackground();drawFlash();drawBoltFlash();drawPins(now);
+  // Hot hit orange flash (drawn after background, before pins so it sits under the action)
+  if(hotFlash>0){ctx.fillStyle=`rgba(220,80,0,${hotFlash.toFixed(2)})`;ctx.fillRect(0,0,CW,CH);}
   drawSlots(slotCounts,winningNum,winGlow);
   drawBalls(balls);drawParticles();drawCanvasBolts(now);
-  drawStage2Anim(now);drawCountup();drawMissOverlay(showMiss);
+  drawHotHitOverlay(now);drawStage2Anim(now);drawCountup();drawMissOverlay(showMiss);
   drawLightningOverlay(now);
   if (shakeDecay>0) ctx.restore();
 }
@@ -1142,7 +1174,7 @@ function resetRound(){
   cascadeDropped=0;payoutShown=false;
   winGlow=0;winningNum=null;showMiss=false;
   countup={current:0,target:0,win:0,active:false,isHot:false};
-  stage2Anim.active=false;flashAlpha=0;shakeDecay=0;
+  stage2Anim.active=false;flashAlpha=0;shakeDecay=0;hotFlash=0;hotHitAnim.active=false;
   lightningNums.clear();clearLightningUI();
 }
 
@@ -1221,7 +1253,17 @@ function checkStage1(){
       consecutiveMisses=0;updateHeatMeter();
       Sound.activate();
       setState(S.PAYOUT);
-      setTimeout(startCascade,400);
+      // Hot number hit — fire burst + overlay before cascade
+      if(hotNums.has(landed)){
+        hotFlash=0.45;
+        hotHitAnim={active:true,start:performance.now()};
+        const slotX=(NUMBER_TO_SLOT[landed]+0.5)*SLOT_W;
+        spawnParticles(slotX,SLOT_TOP,90,HOT_WIN_COLS);
+        spawnParticles(slotX,SLOT_TOP-20,50,HOT_WIN_COLS);
+        setTimeout(startCascade,1100);
+      } else {
+        setTimeout(startCascade,400);
+      }
     } else {
       roundNumber++;
       addHistory({round:roundNumber,landed,selected:null,hit:false,win:0,mult:0,hot:false,lightMult:1});
@@ -1379,6 +1421,7 @@ function gameLoop(){
 
   if(flashAlpha>0) flashAlpha=Math.max(0,flashAlpha-0.035);
   if(boltFlash>0) boltFlash=Math.max(0,boltFlash-0.038);
+  if(hotFlash>0)  hotFlash=Math.max(0,hotFlash-0.022);
   if(lightningOverlay.alpha>0){
     const age=performance.now()-lightningOverlay.start;
     if(age>320) lightningOverlay.alpha=Math.max(0,lightningOverlay.alpha-0.03);
